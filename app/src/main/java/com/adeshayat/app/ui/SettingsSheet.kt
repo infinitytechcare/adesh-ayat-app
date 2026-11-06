@@ -29,7 +29,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.adeshayat.app.AudioMode
+import com.adeshayat.app.ARABIC_RECITERS
+import com.adeshayat.app.PlayOrder
+import com.adeshayat.app.TRANSLATION_AUDIOS
+import com.adeshayat.app.audio.AudioSource
 import com.adeshayat.app.PlayerViewModel
 import com.adeshayat.app.RepeatSetting
 
@@ -95,18 +98,50 @@ fun SettingsSheet(vm: PlayerViewModel, onDismiss: () -> Unit) {
             }
 
             Spacer(Modifier.height(14.dp))
-            SectionLabel("অডিও")
+            SectionLabel("প্রতিটি আয়াতে কী বাজবে")
             SettingsCard {
-                for (mode in AudioMode.values()) {
+                for (order in PlayOrder.values()) {
                     OptionRow(
-                        title = mode.label,
-                        subtitle = when (mode) {
-                            AudioMode.ARABIC_ONLY -> "শায়খ মিশারী রাশিদ আল-আফাসি"
-                            AudioMode.ARABIC_URDU -> "প্রতিটি আয়াতের আরবির পর উর্দু অনুবাদ (শামশাদ আলী খান)"
-                            AudioMode.URDU_ONLY -> "শুধু উর্দু অনুবাদের অডিও"
+                        title = order.label,
+                        subtitle = when (order) {
+                            PlayOrder.ARABIC_ONLY -> "শুধু ক্বারীর তেলাওয়াত"
+                            PlayOrder.ARABIC_THEN_TRANSLATION -> "আরবি শেষ হলে নিচে বেছে নেওয়া অনুবাদের অডিও"
+                            PlayOrder.TRANSLATION_ONLY -> "আরবি ছাড়া শুধু অনুবাদের অডিও"
                         },
-                        selected = vm.audioMode == mode,
-                        onClick = { vm.updateAudioMode(mode) },
+                        selected = vm.playOrder == order,
+                        onClick = { vm.updatePlayOrder(order) },
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+            SectionLabel("আরবি ক্বারী")
+            SettingsCard {
+                for (src in ARABIC_RECITERS) {
+                    OptionRow(
+                        title = src.label,
+                        subtitle = when (src) {
+                            AudioSource.ABDUL_SAMAD -> "everyayah.com · QuranExplorer.com"
+                            else -> "everyayah.com · ৬৪ kbps"
+                        },
+                        selected = vm.reciter == src,
+                        onClick = { vm.updateReciter(src) },
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+            SectionLabel("অনুবাদের অডিও")
+            SettingsCard {
+                for (src in TRANSLATION_AUDIOS) {
+                    OptionRow(
+                        title = src.label,
+                        subtitle = when (src) {
+                            AudioSource.URDU -> "everyayah.com · প্রতিটি আয়াতের উর্দু অনুবাদ"
+                            else -> "অ্যাপের বাংলা ভাবার্থ, কয়েকটি আয়াতের অর্থ একসাথে থাকলে শেষ আয়াতের পর বাজে"
+                        },
+                        selected = vm.translationAudio == src,
+                        onClick = { vm.updateTranslationAudio(src) },
                     )
                 }
             }

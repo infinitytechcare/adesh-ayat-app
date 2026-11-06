@@ -19,6 +19,11 @@ data class Verse(
     val surahName: String,
     /** কয়েকটি আয়াতের অর্থ একসাথে লেখা থাকলে, যেমন "112:1-4"; না থাকলে খালি। */
     val group: String = "",
+    /**
+     * বাংলা অর্থের অডিও ফাইলের নাম (SSSAAA)। একসাথে লেখা অর্থের ক্ষেত্রে গ্রুপের শেষ আয়াতে
+     * গ্রুপের প্রথম আয়াতের নাম থাকে, মাঝের আয়াতগুলোতে null — অর্থটি পুরো গ্রুপের পর একবার বাজে।
+     */
+    val bnAudioKey: String? = null,
 ) {
     /** গ্রুপের প্রথম আয়াত কিনা (একসাথে লেখা অর্থ এই আয়াতের নিচেই দেখানো হয়) */
     val isGroupStart: Boolean get() = group.isEmpty() || meaningBn.isNotEmpty()
@@ -64,7 +69,20 @@ class QuranData(
                     )
                 )
             }
-            return QuranData(categories, verses)
+            // গ্রুপের যে আয়াতটি তালিকায় সবশেষে আছে (কোনো আয়াত অন্য বিষয়ে আগেই থাকলে গ্রুপ থেকে বাদ পড়ে)
+            val groupLastAyah: Map<String, Int> = verses.filter { it.group.isNotEmpty() }
+                .groupBy { it.group }
+                .mapValues { (_, list) -> list.maxOf { it.ayah } }
+            return QuranData(categories, verses.map { it.copy(bnAudioKey = bnAudioKeyFor(it, groupLastAyah)) })
+        }
+
+        /** "112:1-4" ধরনের গ্রুপ থেকে বাংলা অডিওর ফাইল নাম বের করে */
+        private fun bnAudioKeyFor(v: Verse, groupLastAyah: Map<String, Int>): String? {
+            if (v.group.isEmpty()) return if (v.meaningBn.isNotEmpty()) v.key else null
+            val m = Regex("""^(\d+):(\d+)-(\d+)$""").find(v.group) ?: return null
+            val (s, a, _) = m.destructured
+            if (v.ayah != groupLastAyah[v.group]) return null
+            return String.format(Locale.US, "%03d%03d", s.toInt(), a.toInt())
         }
     }
 }

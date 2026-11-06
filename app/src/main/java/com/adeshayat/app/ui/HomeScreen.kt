@@ -174,7 +174,7 @@ private fun Header(vm: PlayerViewModel, onSettings: () -> Unit) {
                 color = Color.White,
             )
             Text(
-                text = "শায়খ মিশারী রাশিদ আল-আফাসির তেলাওয়াত",
+                text = "তেলাওয়াত: ${vm.reciter.label}",
                 fontFamily = HindSiliguri,
                 fontSize = 14.sp,
                 color = GoldLight.copy(alpha = 0.9f),
@@ -620,9 +620,9 @@ private fun PlayerBar(vm: PlayerViewModel) {
                     Text(
                         text = when {
                             verse == null -> "যেকোনো আয়াতে চাপুন, বা ▶ চাপলে প্রথম থেকে বাজবে"
-                            vm.isLoading -> "${vm.currentSource?.label ?: "অডিও"} ডাউনলোড হচ্ছে…"
+                            vm.isLoading -> "${vm.currentSource?.shortLabel ?: "অডিও"} ডাউনলোড হচ্ছে…"
                             else -> {
-                                val src = vm.currentSource?.label ?: ""
+                                val src = vm.currentSource?.shortLabel ?: ""
                                 when (vm.repeatMode) {
                                     RepeatSetting.ONCE -> "$src · শেষে পরের আয়াত"
                                     RepeatSetting.FIVE -> "$src · পুনরাবৃত্তি ${vm.playCount.bn()}/${REPEAT_TIMES.bn()}"
