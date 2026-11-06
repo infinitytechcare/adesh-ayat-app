@@ -98,7 +98,7 @@ main{padding-bottom:190px}
   <div class="in">
     <div class="bis">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
     <h1>আদেশ ও নিষেধের আয়াত</h1>
-    <div class="sub">শায়খ মিশারী রাশিদ আল-আফাসির তেলাওয়াত</div>
+    <div class="sub" id="hdrSub"></div>
     <div class="stats"><span class="pill" id="stV"></span><span class="pill" id="stC"></span><span class="pill">ওয়েব ভার্সন</span></div>
     <div class="hbtns"><button class="btn-gold" id="playAll">▶ সব প্লে করুন</button></div>
   </div>
@@ -129,7 +129,9 @@ main{padding-bottom:190px}
   <div class="handle"></div>
   <h2>সেটিংস</h2>
   <div class="scard"><label class="opt" id="bnRow"><div><b>বাংলা অনুবাদ দেখান</b><small>প্রতিটি আয়াতের নিচে বাংলা ভাবার্থ</small></div><span class="sw" id="bnSw"></span></label></div>
-  <div class="lbl">অডিও</div><div class="scard" id="audioOpts"></div>
+  <div class="lbl">প্রতিটি আয়াতে কী বাজবে</div><div class="scard" id="orderOpts"></div>
+  <div class="lbl">আরবি ক্বারী</div><div class="scard" id="recOpts"></div>
+  <div class="lbl">অনুবাদের অডিও</div><div class="scard" id="trOpts"></div>
   <div class="lbl">রিপিট</div><div class="scard" id="repOpts"></div>
   <p style="font-size:12px;color:var(--muted)">নতুন অডিও সেটিং পরের আয়াত থেকে কার্যকর হবে। প্লেয়ারের রিপিট চিপ চেপেও মোড বদলানো যায়।</p>
 </div>
@@ -138,13 +140,17 @@ main{padding-bottom:190px}
 <script>
 (function(){
 const SRC={
-  ARABIC:{label:'আরবি তেলাওয়াত',base:'https://everyayah.com/data/Alafasy_64kbps/'},
-  URDU:{label:'উর্দু অনুবাদ',base:'https://everyayah.com/data/translations/urdu_shamshad_ali_khan_46kbps/'}
+  ALAFASY:{label:'মিশারী রাশিদ আল-আফাসি',short:'আরবি তেলাওয়াত',base:'https://everyayah.com/data/Alafasy_64kbps/',arabic:true,sub:'everyayah.com · ৬৪ kbps'},
+  ABDUL_SAMAD:{label:'আব্দুল বাসিত আব্দুস সামাদ',short:'আরবি তেলাওয়াত',base:'https://everyayah.com/data/AbdulSamad_64kbps_QuranExplorer.Com/',arabic:true,sub:'everyayah.com · QuranExplorer.com'},
+  BN_PRADEEP:{label:'বাংলা অনুবাদ (প্রদীপ, পুরুষ কণ্ঠ)',short:'বাংলা অনুবাদ',base:'audio/bn_pradeep/',bn:true,sub:'অ্যাপের বাংলা ভাবার্থ, কয়েকটি আয়াতের অর্থ একসাথে থাকলে শেষ আয়াতের পর বাজে'},
+  BN_NABANITA:{label:'বাংলা অনুবাদ (নবনীতা, নারী কণ্ঠ)',short:'বাংলা অনুবাদ',base:'audio/bn_nabanita/',bn:true,sub:'অ্যাপের বাংলা ভাবার্থ, কয়েকটি আয়াতের অর্থ একসাথে থাকলে শেষ আয়াতের পর বাজে'},
+  URDU:{label:'উর্দু অনুবাদ (শামশাদ আলী খান)',short:'উর্দু অনুবাদ',base:'https://everyayah.com/data/translations/urdu_shamshad_ali_khan_46kbps/',sub:'everyayah.com · প্রতিটি আয়াতের উর্দু অনুবাদ'}
 };
-const AUDIO_MODES={
-  ARABIC_ONLY:{label:'শুধু আরবি তেলাওয়াত',sub:'শায়খ মিশারী রাশিদ আল-আফাসি',src:['ARABIC']},
-  ARABIC_URDU:{label:'আরবি তেলাওয়াত + উর্দু অনুবাদ',sub:'প্রতিটি আয়াতের আরবির পর উর্দু অনুবাদ (শামশাদ আলী খান)',src:['ARABIC','URDU']},
-  URDU_ONLY:{label:'শুধু উর্দু অনুবাদ',sub:'শুধু উর্দু অনুবাদের অডিও',src:['URDU']}
+const RECITERS=['ALAFASY','ABDUL_SAMAD'], TRANSLATIONS=['BN_PRADEEP','BN_NABANITA','URDU'];
+const ORDERS={
+  ARABIC_ONLY:{label:'শুধু আরবি তেলাওয়াত',sub:'শুধু ক্বারীর তেলাওয়াত'},
+  ARABIC_THEN_TRANSLATION:{label:'আরবি তেলাওয়াত, তারপর অনুবাদ',sub:'আরবি শেষ হলে নিচে বেছে নেওয়া অনুবাদের অডিও'},
+  TRANSLATION_ONLY:{label:'শুধু অনুবাদ',sub:'আরবি ছাড়া শুধু অনুবাদের অডিও'}
 };
 const REPEATS={
   ONCE:{short:'১ বার',label:'প্রতিটি আয়াত ১ বার, তারপর পরেরটি'},
@@ -161,8 +167,11 @@ function load(k,d){try{const v=localStorage.getItem('aa_'+k);return v==null?d:JS
 function save(k,v){try{localStorage.setItem('aa_'+k,JSON.stringify(v))}catch(e){}}
 
 const S={data:null,cat:null,visible:[],queue:[],cur:null,track:0,count:1,playing:false,loading:false,
-  showBn:load('showBn',true),audioMode:load('audioMode','ARABIC_ONLY'),repeat:load('repeat','ONCE'),unitPlayed:false};
-if(!AUDIO_MODES[S.audioMode])S.audioMode='ARABIC_ONLY';
+  showBn:load('showBn',true),reciter:load('reciter','ALAFASY'),trans:load('trans',null),order:load('order',null),repeat:load('repeat','ONCE'),unitPlayed:false,tracks:[]};
+{const old=load('audioMode',null); // ১.১-এর পুরনো সেটিং
+ if(!ORDERS[S.order])S.order=old==='ARABIC_URDU'?'ARABIC_THEN_TRANSLATION':old==='URDU_ONLY'?'TRANSLATION_ONLY':'ARABIC_ONLY';
+ if(!TRANSLATIONS.includes(S.trans))S.trans=(old==='ARABIC_URDU'||old==='URDU_ONLY')?'URDU':'BN_PRADEEP';
+ if(!RECITERS.includes(S.reciter))S.reciter='ALAFASY';}
 if(!REPEATS[S.repeat])S.repeat='ONCE';
 
 const audio=new Audio();audio.preload='auto';
@@ -213,7 +222,7 @@ function updateUI(){
     if(S.repeat==='FIVE'){rb='<div class="rep">';for(let i=1;i<=REPEAT_TIMES;i++)rb+=`<span class="dot${i<=S.count?' f':''}"></span>`;rb+=`পুনরাবৃত্তি ${bn(S.count)}/${bn(REPEAT_TIMES)}</div>`}
     if(S.repeat==='ONE')rb=`<div class="rep">🔂 বারবার বাজছে · ${bn(S.count)} বার হয়েছে</div>`;
     c.querySelector('.repbox').innerHTML=rb}}
-  const src=v?SRC[AUDIO_MODES[S.audioMode].src[S.track]||'ARABIC'].label:'';
+  const src=v&&S.tracks[S.track]?SRC[S.tracks[S.track].src].short:'';$('hdrSub').textContent='তেলাওয়াত: '+SRC[S.reciter].label;
   $('pTitle').textContent=v?`সূরা ${S.data.surahs[v.s]} · ${bn(v.s)}:${bn(v.a)}`:'তেলাওয়াত শুনুন';
   $('pSub').textContent=!v?'যেকোনো আয়াতে চাপুন, বা ▶ চাপলে প্রথম থেকে বাজবে':S.loading?src+' লোড হচ্ছে…':
     S.repeat==='ONCE'?src+' · শেষে পরের আয়াত':S.repeat==='FIVE'?`${src} · পুনরাবৃত্তি ${bn(S.count)}/${bn(REPEAT_TIMES)}`:`${src} · একই আয়াত বারবার (${bn(S.count)})`;
@@ -227,43 +236,51 @@ audio.addEventListener('timeupdate',tick);audio.addEventListener('loadedmetadata
 
 // ---------- playback ----------
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3000)}
-function urlFor(v,src){return SRC[src].base+keyOf(v)+'.mp3'}
-function playVerse(v){S.queue=S.visible;S.count=1;playTrack(v,0)}
+// বাংলা অর্থ কয়েকটি আয়াতের জন্য একসাথে লেখা থাকলে, গ্রুপের যে আয়াত তালিকায় সবশেষে আছে তার পর একবার বাজে
+let GROUP_LAST={};
+function bnKey(v){if(!v.group)return v.bn?keyOf(v):null;const m=v.group.match(/^(\d+):(\d+)-(\d+)$/);if(!m)return null;
+  if(v.a!==GROUP_LAST[v.group])return null;return pad3(+m[1])+pad3(+m[2])}
+function tracksFor(v){const t=[];if(S.order!=='TRANSLATION_ONLY')t.push({src:S.reciter,key:keyOf(v)});
+  if(S.order!=='ARABIC_ONLY'){const k=SRC[S.trans].bn?bnKey(v):keyOf(v);if(k)t.push({src:S.trans,key:k})}return t}
+function urlFor(t){return SRC[t.src].base+t.key+'.mp3'}
+function playVerse(v){S.queue=S.visible;S.count=1;startVerse(v)}
+function startVerse(v){S.cur=v;S.tracks=tracksFor(v);if(!S.tracks.length){next();return}playTrack(v,0)}
 function playTrack(v,idx){
-  const srcs=AUDIO_MODES[S.audioMode].src;S.cur=v;S.track=idx;if(idx===0)S.unitPlayed=false;
+  S.cur=v;S.track=idx;if(idx===0)S.unitPlayed=false;
   S.loading=true;S.playing=false;updateUI();scrollToCur();
-  audio.src=urlFor(v,srcs[idx]);
+  audio.src=urlFor(S.tracks[idx]);
   audio.play().then(()=>{}).catch(e=>{if(e.name==='NotAllowedError'){S.loading=false;updateUI();toast('▶ চাপুন')} });
   prefetch(v,idx);
 }
-function prefetch(v,idx){const srcs=AUDIO_MODES[S.audioMode].src;let u=null;
-  if(idx+1<srcs.length)u=urlFor(v,srcs[idx+1]);else{const q=S.queue.length?S.queue:S.visible;const i=q.findIndex(x=>x===v);if(q[i+1])u=urlFor(q[i+1],srcs[0])}
+function prefetch(v,idx){let u=null;
+  if(idx+1<S.tracks.length)u=urlFor(S.tracks[idx+1]);else{const q=S.queue.length?S.queue:S.visible;const i=q.indexOf(v);const n=q[i+1]&&tracksFor(q[i+1])[0];if(n)u=urlFor(n)}
   if(u&&pre.src!==u)pre.src=u}
 audio.addEventListener('playing',()=>{S.loading=false;S.playing=true;S.unitPlayed=true;updateUI()});
 audio.addEventListener('pause',()=>{if(!audio.ended){S.playing=false;updateUI()}});
 audio.addEventListener('waiting',()=>{S.loading=true;updateUI()});
 audio.addEventListener('ended',onTrackDone);
-audio.addEventListener('error',()=>{if(!S.cur||!audio.getAttribute('src'))return;const srcs=AUDIO_MODES[S.audioMode].src;
-  S.loading=false;
-  // আয়াতের কোনো অংশ আগে বেজে থাকলে (যেমন আরবি বেজেছে, উর্দু নেই) শুধু এই অংশটি বাদ দিই;
+audio.addEventListener('error',()=>{if(!S.cur||!audio.getAttribute('src'))return;
+  S.loading=false;const t=S.tracks[S.track];
+  // আয়াতের কোনো অংশ আগে বেজে থাকলে (যেমন আরবি বেজেছে, অনুবাদ নেই) শুধু এই অংশটি বাদ দিই;
   // নইলে থেমে যাই — যাতে ইন্টারনেট না থাকলে পরপর সব আয়াত স্কিপ না হয়
-  if(S.unitPlayed){toast(SRC[srcs[S.track]].label+': '+bn(S.cur.s)+':'+bn(S.cur.a)+' অডিও পাওয়া যায়নি, বাদ দেওয়া হলো');onTrackDone()}
+  if(S.unitPlayed){toast(SRC[t.src].short+': '+bn(S.cur.s)+':'+bn(S.cur.a)+' অডিও পাওয়া যায়নি, বাদ দেওয়া হলো');onTrackDone()}
   else{S.playing=false;updateUI();toast('অডিও লোড হয়নি — ইন্টারনেট সংযোগ পরীক্ষা করুন')}});
 function onTrackDone(){
-  const v=S.cur;if(!v)return;const srcs=AUDIO_MODES[S.audioMode].src;
-  if(S.track+1<srcs.length){playTrack(v,S.track+1);return}
+  const v=S.cur;if(!v)return;
+  if(S.track+1<S.tracks.length){playTrack(v,S.track+1);return}
   const again=S.repeat==='ONE'||(S.repeat==='FIVE'&&S.count<REPEAT_TIMES);
-  if(again){S.count++;if(srcs.length===1){audio.currentTime=0;audio.play()}else playTrack(v,0);updateUI()}
+  if(again){S.count++;const fresh=tracksFor(v);
+    if(S.tracks.length===1&&JSON.stringify(fresh)===JSON.stringify(S.tracks)){audio.currentTime=0;audio.play()}else startVerse(v);updateUI()}
   else next();
 }
 function next(){const v=S.cur;if(!v)return;const q=S.queue.length?S.queue:S.visible;const i=q.indexOf(v);
-  if(i>=0&&i+1<q.length){S.count=1;playTrack(q[i+1],0)}else{stopAll(false);toast('তালিকার শেষ আয়াত পর্যন্ত বাজানো হয়েছে')}}
-function prev(){const v=S.cur;if(!v)return;const q=S.queue.length?S.queue:S.visible;const i=q.indexOf(v);S.count=1;playTrack(i>0?q[i-1]:v,0)}
+  if(i>=0&&i+1<q.length){S.count=1;startVerse(q[i+1])}else{stopAll(false);toast('তালিকার শেষ আয়াত পর্যন্ত বাজানো হয়েছে')}}
+function prev(){const v=S.cur;if(!v)return;const q=S.queue.length?S.queue:S.visible;const i=q.indexOf(v);S.count=1;startVerse(i>0?q[i-1]:v)}
 function stopAll(clear){audio.pause();audio.removeAttribute('src');audio.load();S.playing=false;S.loading=false;if(clear)S.cur=null;$('barFill').style.width='0';updateUI()}
 function toggle(){
   if(!S.cur){if(S.visible[0])playVerse(S.visible[0]);return}
   if(S.loading)return;
-  if(S.playing)audio.pause();else if(audio.src)audio.play();else playTrack(S.cur,S.track)}
+  if(S.playing)audio.pause();else if(audio.getAttribute('src'))audio.play();else startVerse(S.cur)}
 function scrollToCur(){const c=S.cur&&$('k'+keyOf(S.cur));if(!c)return;const r=c.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight-200)c.scrollIntoView({behavior:'smooth',block:'center'})}
 
 $('list').addEventListener('click',e=>{const c=e.target.closest('.card');if(!c)return;const v=S.visible[+c.dataset.i];if(S.cur===v)toggle();else playVerse(v)});
@@ -276,10 +293,15 @@ $('bar').onclick=e=>{if(!audio.duration)return;const r=e.currentTarget.getBoundi
 function setRepeat(k){S.repeat=k;save('repeat',k);renderOpts();updateUI()}
 function renderOpts(){
   $('bnSw').className='sw'+(S.showBn?' on':'');
-  $('audioOpts').innerHTML=Object.entries(AUDIO_MODES).map(([k,m])=>`<label class="opt"><input type="radio" name="am" value="${k}" ${S.audioMode===k?'checked':''}><div><b>${m.label}</b><small>${m.sub}</small></div></label>`).join('');
+  const radio=(name,k,label,sub,on)=>`<label class="opt"><input type="radio" name="${name}" value="${k}" ${on?'checked':''}><div><b>${label}</b><small>${sub}</small></div></label>`;
+  $('orderOpts').innerHTML=Object.entries(ORDERS).map(([k,m])=>radio('od',k,m.label,m.sub,S.order===k)).join('');
+  $('recOpts').innerHTML=RECITERS.map(k=>radio('rc',k,SRC[k].label,SRC[k].sub,S.reciter===k)).join('');
+  $('trOpts').innerHTML=TRANSLATIONS.map(k=>radio('tr',k,SRC[k].label,SRC[k].sub,S.trans===k)).join('');
   $('repOpts').innerHTML=Object.entries(REPEATS).map(([k,m])=>`<label class="opt"><input type="radio" name="rp" value="${k}" ${S.repeat===k?'checked':''}><div><b>${m.short}</b><small>${m.label}</small></div></label>`).join('');
 }
-$('audioOpts').addEventListener('change',e=>{S.audioMode=e.target.value;save('audioMode',S.audioMode)});
+$('orderOpts').addEventListener('change',e=>{S.order=e.target.value;save('order',S.order)});
+$('recOpts').addEventListener('change',e=>{S.reciter=e.target.value;save('reciter',S.reciter);updateUI()});
+$('trOpts').addEventListener('change',e=>{S.trans=e.target.value;save('trans',S.trans)});
 $('repOpts').addEventListener('change',e=>setRepeat(e.target.value));
 $('bnRow').onclick=e=>{e.preventDefault();S.showBn=!S.showBn;save('showBn',S.showBn);renderOpts();renderList()};
 function openSheet(o){$('sheet').classList.toggle('open',o);$('sheetBg').style.display=o?'block':'none'}
@@ -287,7 +309,7 @@ $('gear').onclick=()=>{renderOpts();openSheet(true)};$('sheetBg').onclick=()=>op
 
 // ---------- start ----------
 updateUI();
-fetch('verses.json').then(r=>r.json()).then(d=>{S.data=d;$('stV').textContent=bn(d.verses.length)+' আয়াত';$('stC').textContent=bn(d.categories.length)+' বিষয়';filter();renderChips();renderList()})
+fetch('verses.json').then(r=>r.json()).then(d=>{S.data=d;GROUP_LAST={};d.verses.forEach(v=>{if(v.group)GROUP_LAST[v.group]=Math.max(GROUP_LAST[v.group]||0,v.a)});$('stV').textContent=bn(d.verses.length)+' আয়াত';$('stC').textContent=bn(d.categories.length)+' বিষয়';filter();renderChips();renderList()})
  .catch(()=>{$('list').innerHTML='<p style="text-align:center;padding:30px">ডেটা লোড করা যায়নি।</p>'});
 })();
 </script>
