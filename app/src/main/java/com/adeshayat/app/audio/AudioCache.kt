@@ -12,7 +12,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 
-private const val BN_AUDIO_BASE = "https://infinitytechcare.github.io/adesh-ayat-app/audio/"
+// jsDelivr CDN সরাসরি GitHub repo থেকে ফাইল দেয় (GitHub Pages ডিপ্লয়ের ওপর নির্ভর করে না)
+private const val BN_AUDIO_BASE = "https://cdn.jsdelivr.net/gh/infinitytechcare/adesh-ayat-app@main/docs/audio/"
 
 /** অডিওর উৎস: সার্ভারের ফোল্ডার আর অ্যাপের ভেতরের ক্যাশ ফোল্ডার। */
 enum class AudioSource(
