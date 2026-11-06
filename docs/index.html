@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#062A20">
+<title>আদেশ-নিষেধের আয়াত — ওয়েব ভার্সন</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@400;600;700&display=swap">
+<style>
+:root{--e9:#062A20;--e8:#0B3D2E;--e7:#105440;--e6:#17694F;--e5:#E8F3EE;--gold:#D4AF37;--gl:#F1D98A;--cream:#FBF7EE;--ink:#1E2B26;--muted:#6B7A73}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--cream);color:var(--ink);font-family:'Hind Siliguri',sans-serif}
+button{font-family:inherit;cursor:pointer}
+.wrap{max-width:720px;margin:0 auto}
+header{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--e9),var(--e7));color:#fff;border-radius:0 0 32px 32px;padding:20px 20px 22px;text-align:center}
+header svg.pat{position:absolute;inset:0;width:100%;height:100%;opacity:.10;pointer-events:none}
+header .in{position:relative}
+.bis{font-family:Amiri,serif;font-size:26px;color:var(--gl);padding:0 40px}
+h1{margin:8px 0 0;font-size:26px}
+.sub{color:var(--gl);opacity:.9;font-size:14px}
+.stats{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.pill{background:rgba(255,255,255,.12);border-radius:99px;padding:4px 12px;font-weight:600;font-size:13px}
+.hbtns{display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.btn-gold{background:var(--gold);color:var(--e9);border:0;border-radius:99px;padding:10px 18px;font-weight:700;font-size:14px}
+.gear{position:absolute;z-index:2;top:10px;right:10px;background:none;border:0;color:var(--gl);padding:8px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:14px 16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;border:1px solid rgba(16,84,64,.2);background:#fff;color:var(--e8);border-radius:99px;padding:8px 16px;font-weight:600;font-size:14px}
+.chip.on{background:var(--e7);color:#fff;border-color:var(--e7)}
+.sec{display:flex;align-items:center;gap:8px;margin:14px 20px 4px;font-weight:700;color:var(--e8)}
+.sec:before{content:"";width:4px;height:18px;border-radius:2px;background:var(--gold)}
+.card{margin:6px 16px;background:#fff;border-radius:20px;padding:16px;box-shadow:0 2px 6px rgba(6,42,32,.08);border:2px solid transparent;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.card.now{border-color:var(--gold);background:#FFFCF2;box-shadow:0 8px 20px rgba(6,42,32,.15)}
+.top{display:flex;align-items:center;gap:12px}
+.badge{position:relative;width:42px;height:42px;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
+.badge svg{position:absolute;inset:0}
+.badge span{position:relative}
+.meta{flex:1;min-width:0}
+.sname{font-weight:600;color:var(--e8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ref{font-size:12px;color:var(--muted)}
+.pbtn{width:42px;height:42px;border-radius:50%;border:0;background:var(--e5);color:var(--e7);display:grid;place-items:center;flex:none}
+.card.now .pbtn{background:var(--gold);color:var(--e9)}
+.ar{font-family:Amiri,serif;font-size:25px;line-height:1.95;direction:rtl;text-align:right;margin-top:12px}
+.bn{border-top:1px solid rgba(16,84,64,.12);margin-top:12px;padding-top:10px;font-size:15px;line-height:1.7;color:rgba(30,43,38,.88)}
+.glabel{display:block;color:var(--gold);font-weight:600;font-size:12px}
+.bnnote{margin-top:8px;font-size:12px;color:var(--muted)}
+.rep{margin-top:10px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--e7)}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(212,175,55,.25)}
+.dot.f{background:var(--gold)}
+.eq{display:flex;gap:3px;align-items:flex-end;height:20px}
+.eq i{width:4px;background:var(--gold);border-radius:2px;animation:eq .45s ease-in-out infinite alternate}
+.eq i:nth-child(2){animation-duration:.6s}.eq i:nth-child(3){animation-duration:.75s}
+@keyframes eq{from{height:25%}to{height:100%}}
+.spin{width:20px;height:20px;border:2px solid rgba(212,175,55,.3);border-top-color:var(--gold);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+main{padding-bottom:190px}
+.player{position:fixed;left:0;right:0;bottom:0;z-index:5}
+.player .in{max-width:720px;margin:0 auto;background:linear-gradient(90deg,var(--e9),var(--e7));color:#fff;border-radius:28px 28px 0 0;padding:14px 20px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(0,0,0,.2)}
+.prow{display:flex;align-items:center;gap:8px}
+.ptitle{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psub{font-size:12px;color:var(--gl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.repchip{display:flex;align-items:center;gap:4px;border:1px solid rgba(212,175,55,.6);background:rgba(255,255,255,.12);color:#fff;border-radius:99px;padding:7px 12px;font-weight:700;font-size:13px;flex:none}
+.repchip.on{background:var(--gold);color:var(--e9);border-color:var(--gold)}
+.bar{height:4px;background:rgba(255,255,255,.18);border-radius:2px;margin-top:12px;overflow:hidden;cursor:pointer}
+.bar div{height:100%;width:0;background:var(--gold)}
+.bar.load div{width:30%;animation:ld 1s ease-in-out infinite}
+@keyframes ld{from{margin-left:-30%}to{margin-left:100%}}
+.times{display:flex;justify-content:space-between;font-size:11px;opacity:.7;margin-top:4px}
+.ctrls{display:flex;align-items:center;justify-content:center;gap:14px}
+.ic{background:none;border:0;color:#fff;padding:6px;display:grid;place-items:center}
+.ic:disabled{opacity:.3}
+.big{width:64px;height:64px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--gl),var(--gold));color:var(--e9);display:grid;place-items:center;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;max-width:720px;margin:0 auto;background:var(--cream);border-radius:28px 28px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;transform:translateY(105%);transition:transform .25s}
+.sheet.open{transform:none}
+.handle{width:40px;height:4px;border-radius:2px;background:rgba(0,0,0,.2);margin:4px auto 12px}
+.sheet h2{margin:0 0 14px;color:var(--e8);font-size:22px}
+.lbl{font-weight:700;color:var(--e7);font-size:14px;margin:14px 4px 6px}
+.scard{background:#fff;border-radius:18px;padding:8px 14px}
+.opt{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer}
+.opt input{accent-color:var(--e7);width:18px;height:18px}
+.opt b{display:block;font-weight:600}
+.opt small{color:var(--muted);font-size:12px}
+.sw{margin-left:auto;width:46px;height:28px;border-radius:14px;background:#ccd;position:relative;flex:none;transition:background .2s}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s}
+.sw.on{background:var(--e7)}.sw.on:after{left:21px}
+.toast{position:fixed;left:50%;bottom:210px;transform:translateX(-50%);background:#1E2B26;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.webnote{font-size:12px;color:var(--muted);text-align:center;margin:10px 20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <svg class="pat" id="pat"></svg>
+  <button class="gear" id="gear" aria-label="সেটিংস"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94a7.2 7.2 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.49.42l-.36 2.54a7 7 0 0 0-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.2 7.2 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.12.22.38.3.6.22l2.39-.96c.5.38 1.04.7 1.62.94l.36 2.54c.05.24.25.42.49.42h3.84c.25 0 .45-.18.5-.42l.36-2.54a7 7 0 0 0 1.62-.94l2.39.96c.22.08.48 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></button>
+  <div class="in">
+    <div class="bis">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <h1>আদেশ ও নিষেধের আয়াত</h1>
+    <div class="sub">শায়খ মিশারী রাশিদ আল-আফাসির তেলাওয়াত</div>
+    <div class="stats"><span class="pill" id="stV"></span><span class="pill" id="stC"></span><span class="pill">ওয়েব ভার্সন</span></div>
+    <div class="hbtns"><button class="btn-gold" id="playAll">▶ সব প্লে করুন</button></div>
+  </div>
+</header>
+<div class="chips" id="chips"></div>
+<main id="list"></main>
+<div class="webnote">এটি অ্যাপের পরীক্ষামূলক ওয়েব ভার্সন। অফলাইন সেভ শুধু Android অ্যাপে আছে।</div>
+</div>
+
+<div class="player"><div class="in">
+  <div class="prow">
+    <div style="flex:1;min-width:0"><div class="ptitle" id="pTitle">তেলাওয়াত শুনুন</div><div class="psub" id="pSub">যেকোনো আয়াতে চাপুন, বা ▶ চাপলে প্রথম থেকে বাজবে</div></div>
+    <button class="repchip" id="repChip"></button>
+  </div>
+  <div class="bar" id="bar"><div id="barFill"></div></div>
+  <div class="times"><span id="tPos">০:০০</span><span id="tDur">০:০০</span></div>
+  <div class="ctrls">
+    <button class="ic" id="bStop" aria-label="বন্ধ"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+    <button class="ic" id="bPrev" aria-label="আগের"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M7 6c.55 0 1 .45 1 1v10c0 .55-.45 1-1 1s-1-.45-1-1V7c0-.55.45-1 1-1zm3.66 6.82 5.77 4.07c.66.47 1.58-.01 1.58-.82V7.93c0-.81-.91-1.28-1.58-.82l-5.77 4.07a1 1 0 0 0 0 1.64z"/></svg></button>
+    <button class="big" id="bPlay" aria-label="প্লে"></button>
+    <button class="ic" id="bNext" aria-label="পরের"><svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="m7.58 16.89 5.77-4.07a1 1 0 0 0 0-1.64L7.58 7.11C6.91 6.65 6 7.12 6 7.93v8.14c0 .81.91 1.28 1.58.82zM16 7v10c0 .55.45 1 1 1s1-.45 1-1V7c0-.55-.45-1-1-1s-1 .45-1 1z"/></svg></button>
+    <span style="width:38px"></span>
+  </div>
+</div></div>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet">
+  <div class="handle"></div>
+  <h2>সেটিংস</h2>
+  <div class="scard"><label class="opt" id="bnRow"><div><b>বাংলা অনুবাদ দেখান</b><small>প্রতিটি আয়াতের নিচে বাংলা ভাবার্থ</small></div><span class="sw" id="bnSw"></span></label></div>
+  <div class="lbl">অডিও</div><div class="scard" id="audioOpts"></div>
+  <div class="lbl">রিপিট</div><div class="scard" id="repOpts"></div>
+  <p style="font-size:12px;color:var(--muted)">নতুন অডিও সেটিং পরের আয়াত থেকে কার্যকর হবে। প্লেয়ারের রিপিট চিপ চেপেও মোড বদলানো যায়।</p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const SRC={
+  ARABIC:{label:'আরবি তেলাওয়াত',base:'https://everyayah.com/data/Alafasy_64kbps/'},
+  URDU:{label:'উর্দু অনুবাদ',base:'https://everyayah.com/data/translations/urdu_shamshad_ali_khan_46kbps/'}
+};
+const AUDIO_MODES={
+  ARABIC_ONLY:{label:'শুধু আরবি তেলাওয়াত',sub:'শায়খ মিশারী রাশিদ আল-আফাসি',src:['ARABIC']},
+  ARABIC_URDU:{label:'আরবি তেলাওয়াত + উর্দু অনুবাদ',sub:'প্রতিটি আয়াতের আরবির পর উর্দু অনুবাদ (শামশাদ আলী খান)',src:['ARABIC','URDU']},
+  URDU_ONLY:{label:'শুধু উর্দু অনুবাদ',sub:'শুধু উর্দু অনুবাদের অডিও',src:['URDU']}
+};
+const REPEATS={
+  ONCE:{short:'১ বার',label:'প্রতিটি আয়াত ১ বার, তারপর পরেরটি'},
+  FIVE:{short:'৫ বার',label:'প্রতিটি আয়াত ৫ বার, তারপর পরেরটি'},
+  ONE:{short:'বারবার',label:'একটি আয়াতই বারবার (Repeat One)'}
+};
+const REPEAT_TIMES=5;
+const $=id=>document.getElementById(id);
+const bn=n=>String(n).replace(/[0-9]/g,d=>'০১২৩৪৫৬৭৮৯'[d]);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad3=n=>String(n).padStart(3,'0');
+
+function load(k,d){try{const v=localStorage.getItem('aa_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}}
+function save(k,v){try{localStorage.setItem('aa_'+k,JSON.stringify(v))}catch(e){}}
+
+const S={data:null,cat:null,visible:[],queue:[],cur:null,track:0,count:1,playing:false,loading:false,
+  showBn:load('showBn',true),audioMode:load('audioMode','ARABIC_ONLY'),repeat:load('repeat','ONCE'),unitPlayed:false};
+if(!AUDIO_MODES[S.audioMode])S.audioMode='ARABIC_ONLY';
+if(!REPEATS[S.repeat])S.repeat='ONCE';
+
+const audio=new Audio();audio.preload='auto';
+const pre=new Audio();pre.preload='auto';
+
+// ---------- header pattern ----------
+(function(){const svg=$('pat');const step=64,r=23,ri=r*.72;let out='';
+ for(let row=0,y=0;y<500;row++,y+=step*.75){for(let x=row%2?step/2:0;x<900;x+=step){let p='';for(let k=0;k<16;k++){const a=-Math.PI/2+k*Math.PI/8,rr=k%2?ri:r;p+=(k?'L':'M')+(x+rr*Math.cos(a)).toFixed(1)+','+(y+rr*Math.sin(a)).toFixed(1)}out+=`<path d="${p}Z" fill="none" stroke="#D4AF37" stroke-width="1.2"/>`}}
+ svg.innerHTML=out})();
+function starPts(c,R,r){let p='';for(let k=0;k<16;k++){const a=-Math.PI/2+k*Math.PI/8,rr=k%2?r:R;p+=(k?'L':'M')+(c+rr*Math.cos(a)).toFixed(2)+','+(c+rr*Math.sin(a)).toFixed(2)}return p+'Z'}
+const BADGE=`<svg viewBox="0 0 42 42"><path d="${starPts(21,21,16.8)}" fill="#105440"/><path d="${starPts(21,18,14.5)}" fill="none" stroke="#D4AF37" stroke-width="1"/></svg>`;
+const ICON_PLAY='<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18a1 1 0 0 0 0-1.69L9.54 5.98A.998.998 0 0 0 8 6.82z"/></svg>';
+const ICON_PAUSE='<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 19c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2s-2 .9-2 2v10c0 1.1.9 2 2 2zm6-12v10c0 1.1.9 2 2 2s2-.9 2-2V7c0-1.1-.9-2-2-2s-2 .9-2 2z"/></svg>';
+
+// ---------- render ----------
+function renderChips(){
+  const c=$('chips');c.innerHTML='';
+  const mk=(t,id)=>{const b=document.createElement('button');b.className='chip'+(S.cat===id?' on':'');b.textContent=t;b.onclick=()=>{S.cat=id;filter();renderChips();renderList()};c.appendChild(b)};
+  mk('সব আয়াত',null);S.data.categories.forEach(k=>mk(bn(k.id)+'. '+k.title,k.id));
+}
+function filter(){S.visible=S.cat==null?S.data.verses:S.data.verses.filter(v=>v.cat===S.cat)}
+function catTitle(id){const c=S.data.categories.find(c=>c.id===id);return c?c.title:''}
+function cardHtml(v,i){
+  const key=pad3(v.s)+pad3(v.a);
+  let bnHtml='';
+  if(S.showBn&&v.bn){bnHtml=`<div class="bn">${v.group?`<span class="glabel">আয়াত ${bn(v.group)}-এর অর্থ</span>`:''}${esc(v.bn)}</div>`}
+  else if(S.showBn&&v.group&&!v.bn){bnHtml='<div class="bnnote">অর্থ আগের আয়াতের সাথে একত্রে দেওয়া আছে</div>'}
+  return `<div class="card" id="k${key}" data-i="${i}"><div class="top"><div class="badge">${BADGE}<span style="font-size:${i+1>=100?11:13}px">${bn(i+1)}</span></div>
+   <div class="meta"><div class="sname">সূরা ${esc(S.data.surahs[v.s]||String(v.s))}</div><div class="ref">আয়াত ${bn(v.s)}:${bn(v.a)}</div></div>
+   <span class="st"></span><button class="pbtn" aria-label="প্লে">${ICON_PLAY}</button></div>
+   <div class="ar">${esc(v.ar)}</div>${bnHtml}<div class="repbox"></div></div>`;
+}
+function renderList(){
+  let h='',prev=null;
+  S.visible.forEach((v,i)=>{if(v.cat!==prev){h+=`<div class="sec">${bn(v.cat)}. ${esc(catTitle(v.cat))}</div>`;prev=v.cat}h+=cardHtml(v,i)});
+  $('list').innerHTML=h;updateUI();
+}
+function keyOf(v){return pad3(v.s)+pad3(v.a)}
+function fmt(sec){sec=Math.max(0,Math.floor(sec||0));const s=sec%60;return bn(Math.floor(sec/60))+':'+bn(s<10?'0'+s:s)}
+
+function updateUI(){
+  document.querySelectorAll('.card.now').forEach(c=>{c.classList.remove('now');c.querySelector('.st').innerHTML='';c.querySelector('.pbtn').innerHTML=ICON_PLAY;c.querySelector('.repbox').innerHTML=''});
+  const v=S.cur;
+  if(v){const c=$('k'+keyOf(v));if(c){c.classList.add('now');
+    c.querySelector('.st').innerHTML=S.loading?'<div class="spin"></div>':S.playing?'<div class="eq"><i></i><i></i><i></i></div>':'';
+    c.querySelector('.pbtn').innerHTML=S.playing?ICON_PAUSE:ICON_PLAY;
+    let rb='';
+    if(S.repeat==='FIVE'){rb='<div class="rep">';for(let i=1;i<=REPEAT_TIMES;i++)rb+=`<span class="dot${i<=S.count?' f':''}"></span>`;rb+=`পুনরাবৃত্তি ${bn(S.count)}/${bn(REPEAT_TIMES)}</div>`}
+    if(S.repeat==='ONE')rb=`<div class="rep">🔂 বারবার বাজছে · ${bn(S.count)} বার হয়েছে</div>`;
+    c.querySelector('.repbox').innerHTML=rb}}
+  const src=v?SRC[AUDIO_MODES[S.audioMode].src[S.track]||'ARABIC'].label:'';
+  $('pTitle').textContent=v?`সূরা ${S.data.surahs[v.s]} · ${bn(v.s)}:${bn(v.a)}`:'তেলাওয়াত শুনুন';
+  $('pSub').textContent=!v?'যেকোনো আয়াতে চাপুন, বা ▶ চাপলে প্রথম থেকে বাজবে':S.loading?src+' লোড হচ্ছে…':
+    S.repeat==='ONCE'?src+' · শেষে পরের আয়াত':S.repeat==='FIVE'?`${src} · পুনরাবৃত্তি ${bn(S.count)}/${bn(REPEAT_TIMES)}`:`${src} · একই আয়াত বারবার (${bn(S.count)})`;
+  $('bPlay').innerHTML=S.loading?'<div class="spin" style="width:28px;height:28px;border-color:rgba(6,42,32,.25);border-top-color:#062A20"></div>':(S.playing?ICON_PAUSE:ICON_PLAY).replace(/26/g,'38');
+  ['bStop','bPrev','bNext'].forEach(id=>$(id).disabled=!v);
+  $('bar').classList.toggle('load',S.loading);
+  const rc=$('repChip');rc.className='repchip'+(S.repeat!=='ONCE'?' on':'');rc.textContent=(S.repeat==='ONE'?'🔂 ':'🔁 ')+REPEATS[S.repeat].short;
+}
+function tick(){const d=audio.duration;$('barFill').style.width=(!S.loading&&d?Math.min(100,audio.currentTime/d*100):0)+'%';$('tPos').textContent=fmt(audio.currentTime);$('tDur').textContent=fmt(d)}
+audio.addEventListener('timeupdate',tick);audio.addEventListener('loadedmetadata',tick);
+
+// ---------- playback ----------
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),3000)}
+function urlFor(v,src){return SRC[src].base+keyOf(v)+'.mp3'}
+function playVerse(v){S.queue=S.visible;S.count=1;playTrack(v,0)}
+function playTrack(v,idx){
+  const srcs=AUDIO_MODES[S.audioMode].src;S.cur=v;S.track=idx;if(idx===0)S.unitPlayed=false;
+  S.loading=true;S.playing=false;updateUI();scrollToCur();
+  audio.src=urlFor(v,srcs[idx]);
+  audio.play().then(()=>{}).catch(e=>{if(e.name==='NotAllowedError'){S.loading=false;updateUI();toast('▶ চাপুন')} });
+  prefetch(v,idx);
+}
+function prefetch(v,idx){const srcs=AUDIO_MODES[S.audioMode].src;let u=null;
+  if(idx+1<srcs.length)u=urlFor(v,srcs[idx+1]);else{const q=S.queue.length?S.queue:S.visible;const i=q.findIndex(x=>x===v);if(q[i+1])u=urlFor(q[i+1],srcs[0])}
+  if(u&&pre.src!==u)pre.src=u}
+audio.addEventListener('playing',()=>{S.loading=false;S.playing=true;S.unitPlayed=true;updateUI()});
+audio.addEventListener('pause',()=>{if(!audio.ended){S.playing=false;updateUI()}});
+audio.addEventListener('waiting',()=>{S.loading=true;updateUI()});
+audio.addEventListener('ended',onTrackDone);
+audio.addEventListener('error',()=>{if(!S.cur||!audio.getAttribute('src'))return;const srcs=AUDIO_MODES[S.audioMode].src;
+  S.loading=false;
+  // আয়াতের কোনো অংশ আগে বেজে থাকলে (যেমন আরবি বেজেছে, উর্দু নেই) শুধু এই অংশটি বাদ দিই;
+  // নইলে থেমে যাই — যাতে ইন্টারনেট না থাকলে পরপর সব আয়াত স্কিপ না হয়
+  if(S.unitPlayed){toast(SRC[srcs[S.track]].label+': '+bn(S.cur.s)+':'+bn(S.cur.a)+' অডিও পাওয়া যায়নি, বাদ দেওয়া হলো');onTrackDone()}
+  else{S.playing=false;updateUI();toast('অডিও লোড হয়নি — ইন্টারনেট সংযোগ পরীক্ষা করুন')}});
+function onTrackDone(){
+  const v=S.cur;if(!v)return;const srcs=AUDIO_MODES[S.audioMode].src;
+  if(S.track+1<srcs.length){playTrack(v,S.track+1);return}
+  const again=S.repeat==='ONE'||(S.repeat==='FIVE'&&S.count<REPEAT_TIMES);
+  if(again){S.count++;if(srcs.length===1){audio.currentTime=0;audio.play()}else playTrack(v,0);updateUI()}
+  else next();
+}
+function next(){const v=S.cur;if(!v)return;const q=S.queue.length?S.queue:S.visible;const i=q.indexOf(v);
+  if(i>=0&&i+1<q.length){S.count=1;playTrack(q[i+1],0)}else{stopAll(false);toast('তালিকার শেষ আয়াত পর্যন্ত বাজানো হয়েছে')}}
+function prev(){const v=S.cur;if(!v)return;const q=S.queue.length?S.queue:S.visible;const i=q.indexOf(v);S.count=1;playTrack(i>0?q[i-1]:v,0)}
+function stopAll(clear){audio.pause();audio.removeAttribute('src');audio.load();S.playing=false;S.loading=false;if(clear)S.cur=null;$('barFill').style.width='0';updateUI()}
+function toggle(){
+  if(!S.cur){if(S.visible[0])playVerse(S.visible[0]);return}
+  if(S.loading)return;
+  if(S.playing)audio.pause();else if(audio.src)audio.play();else playTrack(S.cur,S.track)}
+function scrollToCur(){const c=S.cur&&$('k'+keyOf(S.cur));if(!c)return;const r=c.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight-200)c.scrollIntoView({behavior:'smooth',block:'center'})}
+
+$('list').addEventListener('click',e=>{const c=e.target.closest('.card');if(!c)return;const v=S.visible[+c.dataset.i];if(S.cur===v)toggle();else playVerse(v)});
+$('bPlay').onclick=toggle;$('bNext').onclick=next;$('bPrev').onclick=prev;$('bStop').onclick=()=>stopAll(true);
+$('playAll').onclick=()=>{if(S.visible[0])playVerse(S.visible[0])};
+$('repChip').onclick=()=>{const k=Object.keys(REPEATS);setRepeat(k[(k.indexOf(S.repeat)+1)%k.length])};
+$('bar').onclick=e=>{if(!audio.duration)return;const r=e.currentTarget.getBoundingClientRect();audio.currentTime=(e.clientX-r.left)/r.width*audio.duration};
+
+// ---------- settings ----------
+function setRepeat(k){S.repeat=k;save('repeat',k);renderOpts();updateUI()}
+function renderOpts(){
+  $('bnSw').className='sw'+(S.showBn?' on':'');
+  $('audioOpts').innerHTML=Object.entries(AUDIO_MODES).map(([k,m])=>`<label class="opt"><input type="radio" name="am" value="${k}" ${S.audioMode===k?'checked':''}><div><b>${m.label}</b><small>${m.sub}</small></div></label>`).join('');
+  $('repOpts').innerHTML=Object.entries(REPEATS).map(([k,m])=>`<label class="opt"><input type="radio" name="rp" value="${k}" ${S.repeat===k?'checked':''}><div><b>${m.short}</b><small>${m.label}</small></div></label>`).join('');
+}
+$('audioOpts').addEventListener('change',e=>{S.audioMode=e.target.value;save('audioMode',S.audioMode)});
+$('repOpts').addEventListener('change',e=>setRepeat(e.target.value));
+$('bnRow').onclick=e=>{e.preventDefault();S.showBn=!S.showBn;save('showBn',S.showBn);renderOpts();renderList()};
+function openSheet(o){$('sheet').classList.toggle('open',o);$('sheetBg').style.display=o?'block':'none'}
+$('gear').onclick=()=>{renderOpts();openSheet(true)};$('sheetBg').onclick=()=>openSheet(false);
+
+// ---------- start ----------
+updateUI();
+fetch('verses.json').then(r=>r.json()).then(d=>{S.data=d;$('stV').textContent=bn(d.verses.length)+' আয়াত';$('stC').textContent=bn(d.categories.length)+' বিষয়';filter();renderChips();renderList()})
+ .catch(()=>{$('list').innerHTML='<p style="text-align:center;padding:30px">ডেটা লোড করা যায়নি।</p>'});
+})();
+</script>
+</body>
+</html>
