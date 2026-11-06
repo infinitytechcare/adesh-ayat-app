@@ -37,12 +37,35 @@ jobs:
           name: adesh-ayat-apk
           path: adesh-ayat.apk
 
-      # প্রতিটি বিল্ডের APK একটি Release-এ রাখা হয়, যাতে সরাসরি ডাউনলোড লিংক পাওয়া যায়
-      - name: Publish to "latest" release
+      - name: Read version
+        id: ver
+        run: |
+          V=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          echo "name=$V" >> "$GITHUB_OUTPUT"
+          cp adesh-ayat.apk "adesh-ayat-v$V.apk"
+
+      # ভার্সন অনুযায়ী আলাদা রিলিজ (যেমন v1.2) — আগে থাকলে APK আর নোট হালনাগাদ হয়
+      - name: Publish versioned release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.ver.outputs.name }}
+        run: |
+          NOTES="আদেশ-নিষেধের আয়াত v$V — commit ${GITHUB_SHA::7} থেকে তৈরি।
+          APK ডাউনলোড করে ফোনে ইনস্টল করুন (Android 8+)। আগের সংস্করণের ওপরেই ইনস্টল করা যায়, ডাউনলোড করা অডিও থেকে যাবে।"
+          if gh release view "v$V" >/dev/null 2>&1; then
+            gh release upload "v$V" "adesh-ayat-v$V.apk" --clobber
+            gh release edit "v$V" --notes "$NOTES"
+          else
+            gh release create "v$V" "adesh-ayat-v$V.apk" --title "আদেশ-নিষেধের আয়াত v$V" --notes "$NOTES" --latest
+          fi
+
+      # সবসময় একই লিংকে সর্বশেষ APK পাওয়ার জন্য "latest" ট্যাগ
+      - name: Update "latest" release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
           gh release create latest adesh-ayat.apk \
             --title "আদেশ-নিষেধের আয়াত (সর্বশেষ বিল্ড)" \
-            --notes "Commit ${GITHUB_SHA::7} থেকে তৈরি। adesh-ayat.apk ডাউনলোড করে ফোনে ইনস্টল করুন।"
+            --notes "Commit ${GITHUB_SHA::7} থেকে তৈরি। adesh-ayat.apk ডাউনলোড করে ফোনে ইনস্টল করুন।" \
+            --prerelease
