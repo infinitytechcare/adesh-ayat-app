@@ -24,13 +24,29 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
 
+      - name: Restore signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::KEYSTORE_BASE64 secret নেই — স্থায়ী চাবি ছাড়া রিলিজ বানানো হবে না (নইলে আপডেট ইনস্টল হবে না)"
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
       - name: Build release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Rename APK
-        run: cp app/build/outputs/apk/release/app-release.apk adesh-ayat.apk
+      - name: Rename APK and show signing certificate
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk adesh-ayat.apk
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          "$APKSIGNER" verify --print-certs adesh-ayat.apk | grep -i "SHA-256"
 
       - uses: actions/upload-artifact@v5
         with:
@@ -51,7 +67,9 @@ jobs:
           V: ${{ steps.ver.outputs.name }}
         run: |
           NOTES="আদেশ-নিষেধের আয়াত v$V — commit ${GITHUB_SHA::7} থেকে তৈরি।
-          APK ডাউনলোড করে ফোনে ইনস্টল করুন (Android 8+)। আগের সংস্করণের ওপরেই ইনস্টল করা যায়, ডাউনলোড করা অডিও থেকে যাবে।"
+          APK ডাউনলোড করে ফোনে ইনস্টল করুন (Android 8+)।
+          v1.3 থেকে সব সংস্করণ একই চাবিতে সই করা, তাই আগের সংস্করণের ওপরেই ইনস্টল হবে।
+          (v1.2 বা তার আগের সংস্করণ থাকলে শুধু এবার একবার মুছে তারপর ইনস্টল করুন।)"
           if gh release view "v$V" >/dev/null 2>&1; then
             gh release upload "v$V" "adesh-ayat-v$V.apk" --clobber
             gh release edit "v$V" --notes "$NOTES"

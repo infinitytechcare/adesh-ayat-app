@@ -12,8 +12,22 @@ android {
         applicationId = "com.adeshayat.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
+    }
+
+    // স্থায়ী চাবি: CI-তে GitHub Secret থেকে আসে। সব ভার্সন একই চাবিতে সই হলে
+    // নতুন APK আগেরটার ওপর সরাসরি ইনস্টল হয় (মুছতে হয় না)।
+    val releaseKeystore = System.getenv("KEYSTORE_FILE")
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS") ?: "adesh"
+                keyPassword = System.getenv("KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -24,9 +38,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // ব্যক্তিগত ব্যবহারের জন্য debug key দিয়ে সাইন করা হচ্ছে, যাতে APK সরাসরি ইনস্টল করা যায়।
-            // Play Store-এ দেওয়ার আগে নিজের release keystore ব্যবহার করুন।
-            signingConfig = signingConfigs.getByName("debug")
+            // চাবি না থাকলে (যেমন নিজের কম্পিউটারে Android Studio-তে) debug key দিয়ে সই হয়
+            signingConfig = if (releaseKeystore != null) signingConfigs.getByName("release")
+            else signingConfigs.getByName("debug")
         }
     }
 
