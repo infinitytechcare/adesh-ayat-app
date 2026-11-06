@@ -17,15 +17,14 @@ data class Verse(
     /** বাংলা ভাবার্থ — পরের সংস্করণে UI-তে দেখানো হবে; ডেটা এখনই প্রস্তুত। */
     val meaningBn: String,
     val surahName: String,
+    /** কয়েকটি আয়াতের অর্থ একসাথে লেখা থাকলে, যেমন "112:1-4"; না থাকলে খালি। */
+    val group: String = "",
 ) {
+    /** গ্রুপের প্রথম আয়াত কিনা (একসাথে লেখা অর্থ এই আয়াতের নিচেই দেখানো হয়) */
+    val isGroupStart: Boolean get() = group.isEmpty() || meaningBn.isNotEmpty()
     /** everyayah.com-এর ফাইল নাম: সূরা ৩ ঘর + আয়াত ৩ ঘর, যেমন 001007 */
     val key: String = String.format(Locale.US, "%03d%03d", surah, ayah)
 
-    val audioUrl: String get() = "$AUDIO_BASE_URL$key.mp3"
-
-    companion object {
-        const val AUDIO_BASE_URL = "https://everyayah.com/data/Alafasy_64kbps/"
-    }
 }
 
 class QuranData(
@@ -61,6 +60,7 @@ class QuranData(
                         arabic = v.getString("ar"),
                         meaningBn = v.optString("bn", ""),
                         surahName = surahNames.optString(s.toString(), s.toString()),
+                        group = v.optString("group", ""),
                     )
                 )
             }

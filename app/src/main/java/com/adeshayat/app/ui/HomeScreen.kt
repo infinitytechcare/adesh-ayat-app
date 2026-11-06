@@ -40,6 +40,8 @@ import androidx.compose.material.icons.rounded.DownloadForOffline
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.Stop
@@ -55,7 +57,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.adeshayat.app.PlayerViewModel
 import com.adeshayat.app.REPEAT_TIMES
+import com.adeshayat.app.RepeatSetting
 import com.adeshayat.app.data.Verse
 import com.adeshayat.app.data.bn
 import com.adeshayat.app.data.toBengaliDigits
@@ -87,6 +92,8 @@ private const val HEADER_ITEMS = 2 // হেডার + বিষয়ের �
 fun HomeScreen(vm: PlayerViewModel) {
     val listState = rememberLazyListState()
     val snackbar = remember { SnackbarHostState() }
+    var showSettings by remember { mutableStateOf(false) }
+    if (showSettings) SettingsSheet(vm) { showSettings = false }
 
     LaunchedEffect(vm.message) {
         val msg = vm.message
@@ -118,7 +125,7 @@ fun HomeScreen(vm: PlayerViewModel) {
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + 16.dp),
         ) {
-            item(key = "header") { Header(vm) }
+            item(key = "header") { Header(vm, onSettings = { showSettings = true }) }
             item(key = "chips") { CategoryRow(vm) }
             itemsIndexed(vm.visible, key = { _, v -> v.key }) { index, verse ->
                 val prevCat = vm.visible.getOrNull(index - 1)?.categoryId
@@ -136,7 +143,7 @@ fun HomeScreen(vm: PlayerViewModel) {
 // ---------------------------------------------------------------- Header
 
 @Composable
-private fun Header(vm: PlayerViewModel) {
+private fun Header(vm: PlayerViewModel, onSettings: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -156,7 +163,7 @@ private fun Header(vm: PlayerViewModel) {
                 fontSize = 26.sp,
                 color = GoldLight,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 36.dp),
             )
             Spacer(Modifier.height(10.dp))
             Text(
@@ -176,7 +183,7 @@ private fun Header(vm: PlayerViewModel) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatPill("${vm.data.verses.size.bn()} আয়াত")
                 StatPill("${vm.data.categories.size.bn()} বিষয়")
-                StatPill("${vm.downloaded.size.bn()} অফলাইনে")
+                StatPill("${vm.offlineCount().bn()} অফলাইনে")
             }
             Spacer(Modifier.height(16.dp))
             Row(
@@ -210,6 +217,15 @@ private fun Header(vm: PlayerViewModel) {
                     onClick = { vm.toggleDownloadAll() },
                 )
             }
+        }
+        IconButton(
+            onClick = onSettings,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(6.dp),
+        ) {
+            Icon(Icons.Rounded.Settings, contentDescription = "সেটিংস", tint = GoldLight, modifier = Modifier.size(26.dp))
         }
     }
 }
@@ -426,7 +442,59 @@ private fun VerseCard(index: Int, verse: Verse, vm: PlayerViewModel) {
             modifier = Modifier.fillMaxWidth(),
         )
 
-        AnimatedVisibility(visible = isCurrent && vm.repeatFive) {
+        if (vm.showBangla && verse.meaningBn.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Emerald700.copy(alpha = 0.12f))
+            )
+            Spacer(Modifier.height(10.dp))
+            if (verse.group.isNotEmpty()) {
+                Text(
+                    text = "আয়াত ${verse.group.toBengaliDigits()}-এর অর্থ",
+                    fontFamily = HindSiliguri,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = Gold,
+                )
+            }
+            Text(
+                text = verse.meaningBn,
+                fontFamily = HindSiliguri,
+                fontSize = 15.sp,
+                lineHeight = 25.sp,
+                color = Ink.copy(alpha = 0.88f),
+            )
+        } else if (vm.showBangla && !verse.isGroupStart) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "অর্থ আগের আয়াতের সাথে একত্রে দেওয়া আছে",
+                fontFamily = HindSiliguri,
+                fontSize = 12.sp,
+                color = Muted,
+            )
+        }
+
+        AnimatedVisibility(visible = isCurrent && vm.repeatMode == RepeatSetting.ONE) {
+            Row(
+                modifier = Modifier.padding(top = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Rounded.RepeatOne, contentDescription = null, tint = Gold, modifier = Modifier.size(18.dp))
+                Text(
+                    text = "বারবার বাজছে · ${vm.playCount.bn()} বার হয়েছে",
+                    fontFamily = HindSiliguri,
+                    fontSize = 12.sp,
+                    color = Emerald700,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
+
+        AnimatedVisibility(visible = isCurrent && vm.repeatMode == RepeatSetting.FIVE) {
             Row(
                 modifier = Modifier.padding(top = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -461,7 +529,7 @@ private fun StatusIndicator(isCurrent: Boolean, verse: Verse, vm: PlayerViewMode
             modifier = Modifier.size(20.dp),
         )
         isCurrent && vm.isPlaying -> EqualizerBars()
-        verse.key in vm.downloaded -> Icon(
+        vm.isOffline(verse) -> Icon(
             Icons.Rounded.DownloadDone,
             contentDescription = "ডাউনলোড করা আছে",
             tint = Emerald600,
@@ -552,9 +620,15 @@ private fun PlayerBar(vm: PlayerViewModel) {
                     Text(
                         text = when {
                             verse == null -> "যেকোনো আয়াতে চাপুন, বা ▶ চাপলে প্রথম থেকে বাজবে"
-                            vm.isLoading -> "ডাউনলোড হচ্ছে…"
-                            vm.repeatFive -> "পুনরাবৃত্তি ${vm.playCount.bn()}/${REPEAT_TIMES.bn()} · তারপর পরের আয়াত"
-                            else -> "শেষ হলে পরের আয়াত নিজে থেকেই বাজবে"
+                            vm.isLoading -> "${vm.currentSource?.label ?: "অডিও"} ডাউনলোড হচ্ছে…"
+                            else -> {
+                                val src = vm.currentSource?.label ?: ""
+                                when (vm.repeatMode) {
+                                    RepeatSetting.ONCE -> "$src · শেষে পরের আয়াত"
+                                    RepeatSetting.FIVE -> "$src · পুনরাবৃত্তি ${vm.playCount.bn()}/${REPEAT_TIMES.bn()}"
+                                    RepeatSetting.ONE -> "$src · একই আয়াত বারবার (${vm.playCount.bn()})"
+                                }
+                            }
                         },
                         color = GoldLight,
                         fontFamily = HindSiliguri,
@@ -564,7 +638,7 @@ private fun PlayerBar(vm: PlayerViewModel) {
                     )
                 }
                 Spacer(Modifier.width(8.dp))
-                RepeatToggle(vm.repeatFive) { vm.toggleRepeat() }
+                RepeatToggle(vm.repeatMode) { vm.cycleRepeatMode() }
             }
 
             Spacer(Modifier.height(12.dp))
@@ -635,7 +709,8 @@ private fun PlayerBar(vm: PlayerViewModel) {
 }
 
 @Composable
-private fun RepeatToggle(active: Boolean, onClick: () -> Unit) {
+private fun RepeatToggle(mode: RepeatSetting, onClick: () -> Unit) {
+    val active = mode != RepeatSetting.ONCE
     val bg by animateColorAsState(if (active) Gold else Color.White.copy(alpha = 0.12f), label = "repeatBg")
     val fg = if (active) Emerald900 else Color.White
     Row(
@@ -648,9 +723,14 @@ private fun RepeatToggle(active: Boolean, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Icon(Icons.Rounded.Repeat, contentDescription = "৫ বার পুনরাবৃত্তি", tint = fg, modifier = Modifier.size(18.dp))
+        Icon(
+            imageVector = if (mode == RepeatSetting.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+            contentDescription = "রিপিট: ${mode.short}",
+            tint = fg,
+            modifier = Modifier.size(18.dp),
+        )
         Text(
-            text = "${REPEAT_TIMES.bn()} বার",
+            text = mode.short,
             color = fg,
             fontFamily = HindSiliguri,
             fontWeight = FontWeight.Bold,
