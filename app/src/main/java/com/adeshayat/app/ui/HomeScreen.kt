@@ -8,6 +8,11 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import com.adeshayat.app.data.Hadith
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -442,7 +447,7 @@ private fun VerseCard(index: Int, verse: Verse, vm: PlayerViewModel) {
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (vm.showBangla && verse.meaningBn.isNotEmpty()) {
+        if (vm.showBangla && verse.translation.isNotEmpty()) {
             Spacer(Modifier.height(12.dp))
             Box(
                 Modifier
@@ -451,30 +456,18 @@ private fun VerseCard(index: Int, verse: Verse, vm: PlayerViewModel) {
                     .background(Emerald700.copy(alpha = 0.12f))
             )
             Spacer(Modifier.height(10.dp))
-            if (verse.group.isNotEmpty()) {
-                Text(
-                    text = "আয়াত ${verse.group.toBengaliDigits()}-এর অর্থ",
-                    fontFamily = HindSiliguri,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp,
-                    color = Gold,
-                )
-            }
             Text(
-                text = verse.meaningBn,
+                text = verse.translation,
                 fontFamily = HindSiliguri,
-                fontSize = 15.sp,
-                lineHeight = 25.sp,
-                color = Ink.copy(alpha = 0.88f),
+                fontSize = 15.5.sp,
+                lineHeight = 26.sp,
+                color = Ink.copy(alpha = 0.9f),
             )
-        } else if (vm.showBangla && !verse.isGroupStart) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "অর্থ আগের আয়াতের সাথে একত্রে দেওয়া আছে",
-                fontFamily = HindSiliguri,
-                fontSize = 12.sp,
-                color = Muted,
-            )
+        }
+
+        val hadiths = remember(verse.key) { vm.data.hadithsFor(verse) }
+        if (hadiths.isNotEmpty()) {
+            HadithSection(hadiths)
         }
 
         AnimatedVisibility(visible = isCurrent && vm.repeatMode == RepeatSetting.ONE) {
@@ -540,6 +533,100 @@ private fun StatusIndicator(isCurrent: Boolean, verse: Verse, vm: PlayerViewMode
             contentDescription = "অনলাইন",
             tint = Muted.copy(alpha = 0.5f),
             modifier = Modifier.size(20.dp),
+        )
+    }
+}
+
+/** "সম্পর্কিত হাদিস" — চাপলে খোলে/বন্ধ হয়; এর ভেতরে চাপলে আয়াত বাজে না */
+@Composable
+private fun HadithSection(hadiths: List<Hadith>) {
+    var open by remember { mutableStateOf(false) }
+    Column(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = {},
+            )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(Gold.copy(alpha = 0.13f))
+                .clickable { open = !open }
+                .padding(horizontal = 12.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.AutoMirrored.Rounded.MenuBook, contentDescription = null, tint = Emerald700, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "সম্পর্কিত হাদিস (${hadiths.size.bn()})",
+                fontFamily = HindSiliguri,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                color = Emerald800,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                imageVector = if (open) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
+                contentDescription = if (open) "বন্ধ করুন" else "খুলুন",
+                tint = Emerald700,
+            )
+        }
+        AnimatedVisibility(visible = open) {
+            Column(
+                modifier = Modifier.padding(top = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                for (h in hadiths) HadithItem(h)
+            }
+        }
+    }
+}
+
+@Composable
+private fun HadithItem(h: Hadith) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFFF6F3EA))
+            .padding(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = h.ref,
+                fontFamily = HindSiliguri,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = Emerald800,
+                modifier = Modifier.weight(1f),
+            )
+            if (h.grade.isNotEmpty()) {
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = h.grade,
+                    fontFamily = HindSiliguri,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 11.sp,
+                    color = Color.White,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(if (h.grade.startsWith("সহিহ")) Emerald600 else Color(0xFFB08A1E))
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = h.text,
+            fontFamily = HindSiliguri,
+            fontSize = 14.sp,
+            lineHeight = 23.sp,
+            color = Ink.copy(alpha = 0.86f),
         )
     }
 }

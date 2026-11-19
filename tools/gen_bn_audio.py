@@ -1,5 +1,5 @@
-"""সব বাংলা অর্থের অডিও তৈরি করে: docs/audio/bn_<voice>/SSSAAA.mp3
-ফাইলের নাম = যে আয়াতের সাথে অর্থটি লেখা আছে (গ্রুপের ক্ষেত্রে গ্রুপের প্রথম আয়াত)।
+"""প্রতিটি আয়াতের পূর্ণ বাংলা অনুবাদের অডিও তৈরি করে: docs/audio/<folder>/SSSAAA.mp3
+অনুবাদ: verses.json-এর "tr" ঘর (ড. আবু বকর মুহাম্মাদ যাকারিয়া)।
 ব্যবহার: python3 gen_bn_audio.py <verses.json> <out_root>
 """
 import asyncio
@@ -15,7 +15,8 @@ if os.path.exists(CA):
     certifi.where = lambda: CA
 import edge_tts  # noqa: E402
 
-VOICES = {'bn_pradeep': 'bn-BD-PradeepNeural', 'bn_nabanita': 'bn-BD-NabanitaNeural'}
+# ফোল্ডারের নাম বদলালে অ্যাপের AudioSource-এর baseUrl/cacheDir-ও বদলাতে হবে
+VOICES = {'bn2_pradeep': 'bn-BD-PradeepNeural', 'bn2_nabanita': 'bn-BD-NabanitaNeural'}
 
 # উচ্চারণ-সংশোধন তালিকা: ভুল শোনা শব্দ এখানে যোগ করুন (লেখা -> পড়ার বানান)
 PRONUNCIATION_FIXES = {
@@ -57,11 +58,8 @@ async def main(verses_path, out_root):
     d = json.load(open(verses_path, encoding='utf-8'))
     jobs = []
     for v in d['verses']:
-        if not v['bn']:
-            continue
         key = f"{v['s']:03d}{v['a']:03d}"
-        text = speech_text(v['bn'])
-        jobs.append((key, text))
+        jobs.append((key, speech_text(v['tr'])))
     sem = asyncio.Semaphore(4)
     tasks = []
     for folder, voice in VOICES.items():
@@ -70,7 +68,7 @@ async def main(verses_path, out_root):
             tasks.append(make(sem, voice, text, os.path.join(out_root, folder, key + '.mp3')))
     results = await asyncio.gather(*tasks)
     fails = [r for r in results if r.startswith('FAIL')]
-    print(f'meanings={len(jobs)} files={len(tasks)} ok={results.count("ok")} skip={results.count("skip")} fail={len(fails)}')
+    print(f'verses={len(jobs)} files={len(tasks)} ok={results.count("ok")} skip={results.count("skip")} fail={len(fails)}')
     for f in fails[:20]:
         print(f)
 

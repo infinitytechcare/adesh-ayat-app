@@ -42,14 +42,15 @@ enum class AudioSource(
     ),
     BN_PRADEEP(
         label = "বাংলা অনুবাদ (প্রদীপ, পুরুষ কণ্ঠ)",
-        baseUrl = "${BN_AUDIO_BASE}bn_pradeep/",
-        cacheDir = "audio_bn_pradeep",
+        // bn2 = প্রতিটি আয়াতের পূর্ণ অনুবাদ (১.৪); আগের bn_ ফোল্ডারে ছিল সংক্ষিপ্ত ভাবার্থ
+        baseUrl = "${BN_AUDIO_BASE}bn2_pradeep/",
+        cacheDir = "audio_bn2_pradeep",
         isArabic = false,
     ),
     BN_NABANITA(
         label = "বাংলা অনুবাদ (নবনীতা, নারী কণ্ঠ)",
-        baseUrl = "${BN_AUDIO_BASE}bn_nabanita/",
-        cacheDir = "audio_bn_nabanita",
+        baseUrl = "${BN_AUDIO_BASE}bn2_nabanita/",
+        cacheDir = "audio_bn2_nabanita",
         isArabic = false,
     );
 
@@ -62,11 +63,8 @@ enum class AudioSource(
 
     val isBangla: Boolean get() = this == BN_PRADEEP || this == BN_NABANITA
 
-    /**
-     * এই আয়াতে এই উৎসের কোন ফাইল বাজবে; null হলে এই আয়াতে এই উৎসের কিছু বাজবে না।
-     * বাংলা অর্থ কয়েকটি আয়াতের জন্য একসাথে লেখা থাকলে গ্রুপের শেষ আয়াতের পর একবার বাজে।
-     */
-    fun fileKey(verse: Verse): String? = if (isBangla) verse.bnAudioKey else verse.key
+    /** এই আয়াতে এই উৎসের কোন ফাইল বাজবে — ১.৪ থেকে প্রতিটি আয়াতের নিজস্ব পূর্ণ অনুবাদের অডিও আছে */
+    fun fileKey(verse: Verse): String? = verse.key
 
     fun url(key: String): String = "$baseUrl$key.mp3"
 }

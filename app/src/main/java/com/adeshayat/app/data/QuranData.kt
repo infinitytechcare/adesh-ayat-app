@@ -4,6 +4,14 @@ import android.content.Context
 import org.json.JSONObject
 import java.util.Locale
 
+/** একটি হাদিস: সূত্র (গ্রন্থ ও নম্বর), মান আর বাংলা অনুবাদ */
+data class Hadith(
+    val id: String,
+    val ref: String,
+    val grade: String,
+    val text: String,
+)
+
 data class Category(
     val id: Int,
     val title: String,
@@ -24,6 +32,10 @@ data class Verse(
      * গ্রুপের প্রথম আয়াতের নাম থাকে, মাঝের আয়াতগুলোতে null — অর্থটি পুরো গ্রুপের পর একবার বাজে।
      */
     val bnAudioKey: String? = null,
+    /** পূর্ণ বাংলা অনুবাদ (ড. আবু বকর মুহাম্মাদ যাকারিয়া) */
+    val translation: String = "",
+    /** সম্পর্কিত হাদিসের id (QuranData.hadiths-এ খুঁজুন) */
+    val hadithIds: List<String> = emptyList(),
 ) {
     /** গ্রুপের প্রথম আয়াত কিনা (একসাথে লেখা অর্থ এই আয়াতের নিচেই দেখানো হয়) */
     val isGroupStart: Boolean get() = group.isEmpty() || meaningBn.isNotEmpty()
@@ -35,7 +47,10 @@ data class Verse(
 class QuranData(
     val categories: List<Category>,
     val verses: List<Verse>,
+    val hadiths: Map<String, Hadith> = emptyMap(),
 ) {
+    fun hadithsFor(verse: Verse): List<Hadith> = verse.hadithIds.mapNotNull { hadiths[it] }
+
     fun categoryTitle(id: Int): String = categories.firstOrNull { it.id == id }?.title ?: ""
 
     companion object {
@@ -66,6 +81,10 @@ class QuranData(
                         meaningBn = v.optString("bn", ""),
                         surahName = surahNames.optString(s.toString(), s.toString()),
                         group = v.optString("group", ""),
+                        translation = v.optString("tr", ""),
+                        hadithIds = v.optJSONArray("hd")?.let { arr ->
+                            List(arr.length()) { arr.getString(it) }
+                        } ?: emptyList(),
                     )
                 )
             }
@@ -73,7 +92,20 @@ class QuranData(
             val groupLastAyah: Map<String, Int> = verses.filter { it.group.isNotEmpty() }
                 .groupBy { it.group }
                 .mapValues { (_, list) -> list.maxOf { it.ayah } }
-            return QuranData(categories, verses.map { it.copy(bnAudioKey = bnAudioKeyFor(it, groupLastAyah)) })
+            val hadiths = HashMap<String, Hadith>()
+            root.optJSONObject("hadiths")?.let { hs ->
+                val keys = hs.keys()
+                while (keys.hasNext()) {
+                    val id = keys.next()
+                    val h = hs.getJSONObject(id)
+                    hadiths[id] = Hadith(id, h.getString("ref"), h.optString("grade", ""), h.getString("text"))
+                }
+            }
+            return QuranData(
+                categories,
+                verses.map { it.copy(bnAudioKey = bnAudioKeyFor(it, groupLastAyah)) },
+                hadiths,
+            )
         }
 
         /** "112:1-4" ধরনের গ্রুপ থেকে বাংলা অডিওর ফাইল নাম বের করে */

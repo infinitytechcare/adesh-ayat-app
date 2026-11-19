@@ -87,6 +87,11 @@ main{padding-bottom:190px}
 .sw.on{background:var(--e7)}.sw.on:after{left:21px}
 .toast{position:fixed;left:50%;bottom:210px;transform:translateX(-50%);background:#1E2B26;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
+.hd{margin-top:12px}.hd summary{cursor:pointer;background:rgba(212,175,55,.13);border-radius:12px;padding:9px 12px;font-weight:600;color:var(--e8);list-style:none}
+.hd summary::-webkit-details-marker{display:none}
+.hdi{background:#F6F3EA;border-radius:14px;padding:12px;margin-top:10px;font-size:14px;line-height:1.7}
+.hdr{display:flex;align-items:center;gap:8px;margin-bottom:6px;color:var(--e8);font-size:13px}.hdr b{flex:1}
+.gr{background:var(--e6);color:#fff;border-radius:99px;padding:1px 8px;font-size:11px;font-weight:600}.gr.h{background:#B08A1E}
 .webnote{font-size:12px;color:var(--muted);text-align:center;margin:10px 20px}
 </style>
 </head>
@@ -128,7 +133,7 @@ main{padding-bottom:190px}
 <div class="sheet" id="sheet">
   <div class="handle"></div>
   <h2>সেটিংস</h2>
-  <div class="scard"><label class="opt" id="bnRow"><div><b>বাংলা অনুবাদ দেখান</b><small>প্রতিটি আয়াতের নিচে বাংলা ভাবার্থ</small></div><span class="sw" id="bnSw"></span></label></div>
+  <div class="scard"><label class="opt" id="bnRow"><div><b>বাংলা অনুবাদ দেখান</b><small>আয়াতের নিচে পূর্ণ বাংলা অনুবাদ (ড. আবু বকর মুহাম্মাদ যাকারিয়া)</small></div><span class="sw" id="bnSw"></span></label></div>
   <div class="lbl">প্রতিটি আয়াতে কী বাজবে</div><div class="scard" id="orderOpts"></div>
   <div class="lbl">আরবি ক্বারী</div><div class="scard" id="recOpts"></div>
   <div class="lbl">অনুবাদের অডিও</div><div class="scard" id="trOpts"></div>
@@ -142,8 +147,8 @@ main{padding-bottom:190px}
 const SRC={
   ALAFASY:{label:'মিশারী রাশিদ আল-আফাসি',short:'আরবি তেলাওয়াত',base:'https://everyayah.com/data/Alafasy_64kbps/',arabic:true,sub:'everyayah.com · ৬৪ kbps'},
   ABDUL_SAMAD:{label:'আব্দুল বাসিত আব্দুস সামাদ',short:'আরবি তেলাওয়াত',base:'https://everyayah.com/data/AbdulSamad_64kbps_QuranExplorer.Com/',arabic:true,sub:'everyayah.com · QuranExplorer.com'},
-  BN_PRADEEP:{label:'বাংলা অনুবাদ (প্রদীপ, পুরুষ কণ্ঠ)',short:'বাংলা অনুবাদ',base:'https://cdn.jsdelivr.net/gh/infinitytechcare/adesh-ayat-app@main/docs/audio/bn_pradeep/',bn:true,sub:'অ্যাপের বাংলা ভাবার্থ, কয়েকটি আয়াতের অর্থ একসাথে থাকলে শেষ আয়াতের পর বাজে'},
-  BN_NABANITA:{label:'বাংলা অনুবাদ (নবনীতা, নারী কণ্ঠ)',short:'বাংলা অনুবাদ',base:'https://cdn.jsdelivr.net/gh/infinitytechcare/adesh-ayat-app@main/docs/audio/bn_nabanita/',bn:true,sub:'অ্যাপের বাংলা ভাবার্থ, কয়েকটি আয়াতের অর্থ একসাথে থাকলে শেষ আয়াতের পর বাজে'},
+  BN_PRADEEP:{label:'বাংলা অনুবাদ (প্রদীপ, পুরুষ কণ্ঠ)',short:'বাংলা অনুবাদ',base:'https://cdn.jsdelivr.net/gh/infinitytechcare/adesh-ayat-app@main/docs/audio/bn2_pradeep/',bn:true,sub:'প্রতিটি আয়াতের পূর্ণ বাংলা অনুবাদ (ড. আবু বকর মুহাম্মাদ যাকারিয়া)'},
+  BN_NABANITA:{label:'বাংলা অনুবাদ (নবনীতা, নারী কণ্ঠ)',short:'বাংলা অনুবাদ',base:'https://cdn.jsdelivr.net/gh/infinitytechcare/adesh-ayat-app@main/docs/audio/bn2_nabanita/',bn:true,sub:'প্রতিটি আয়াতের পূর্ণ বাংলা অনুবাদ (ড. আবু বকর মুহাম্মাদ যাকারিয়া)'},
   URDU:{label:'উর্দু অনুবাদ (শামশাদ আলী খান)',short:'উর্দু অনুবাদ',base:'https://everyayah.com/data/translations/urdu_shamshad_ali_khan_46kbps/',sub:'everyayah.com · প্রতিটি আয়াতের উর্দু অনুবাদ'}
 };
 const RECITERS=['ALAFASY','ABDUL_SAMAD'], TRANSLATIONS=['BN_PRADEEP','BN_NABANITA','URDU'];
@@ -197,8 +202,9 @@ function catTitle(id){const c=S.data.categories.find(c=>c.id===id);return c?c.ti
 function cardHtml(v,i){
   const key=pad3(v.s)+pad3(v.a);
   let bnHtml='';
-  if(S.showBn&&v.bn){bnHtml=`<div class="bn">${v.group?`<span class="glabel">আয়াত ${bn(v.group)}-এর অর্থ</span>`:''}${esc(v.bn)}</div>`}
-  else if(S.showBn&&v.group&&!v.bn){bnHtml='<div class="bnnote">অর্থ আগের আয়াতের সাথে একত্রে দেওয়া আছে</div>'}
+  if(S.showBn&&v.tr){bnHtml=`<div class="bn">${esc(v.tr)}</div>`}
+  const hs=(v.hd||[]).map(id=>S.data.hadiths[id]).filter(Boolean);
+  if(hs.length){bnHtml+=`<details class="hd" onclick="event.stopPropagation()"><summary>📖 সম্পর্কিত হাদিস (${bn(hs.length)})</summary>${hs.map(h=>`<div class="hdi"><div class="hdr"><b>${esc(h.ref)}</b>${h.grade?`<span class="gr${h.grade.startsWith('সহিহ')?'':' h'}">${esc(h.grade)}</span>`:''}</div><div>${esc(h.text)}</div></div>`).join('')}</details>`}
   return `<div class="card" id="k${key}" data-i="${i}"><div class="top"><div class="badge">${BADGE}<span style="font-size:${i+1>=100?11:13}px">${bn(i+1)}</span></div>
    <div class="meta"><div class="sname">সূরা ${esc(S.data.surahs[v.s]||String(v.s))}</div><div class="ref">আয়াত ${bn(v.s)}:${bn(v.a)}</div></div>
    <span class="st"></span><button class="pbtn" aria-label="প্লে">${ICON_PLAY}</button></div>
@@ -241,7 +247,7 @@ let GROUP_LAST={};
 function bnKey(v){if(!v.group)return v.bn?keyOf(v):null;const m=v.group.match(/^(\d+):(\d+)-(\d+)$/);if(!m)return null;
   if(v.a!==GROUP_LAST[v.group])return null;return pad3(+m[1])+pad3(+m[2])}
 function tracksFor(v){const t=[];if(S.order!=='TRANSLATION_ONLY')t.push({src:S.reciter,key:keyOf(v)});
-  if(S.order!=='ARABIC_ONLY'){const k=SRC[S.trans].bn?bnKey(v):keyOf(v);if(k)t.push({src:S.trans,key:k})}return t}
+  if(S.order!=='ARABIC_ONLY'){t.push({src:S.trans,key:keyOf(v)})}return t}
 function urlFor(t){return SRC[t.src].base+t.key+'.mp3'}
 function playVerse(v){S.queue=S.visible;S.count=1;startVerse(v)}
 function startVerse(v){S.cur=v;S.tracks=tracksFor(v);if(!S.tracks.length){next();return}playTrack(v,0)}

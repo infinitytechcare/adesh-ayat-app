@@ -80,7 +80,7 @@ fun SettingsSheet(vm: PlayerViewModel, onDismiss: () -> Unit) {
                             color = Ink,
                         )
                         Text(
-                            "প্রতিটি আয়াতের নিচে বাংলা ভাবার্থ",
+                            "আয়াতের নিচে পূর্ণ বাংলা অনুবাদ (ড. আবু বকর মুহাম্মাদ যাকারিয়া)",
                             fontFamily = HindSiliguri,
                             fontSize = 13.sp,
                             color = Muted,
@@ -138,7 +138,7 @@ fun SettingsSheet(vm: PlayerViewModel, onDismiss: () -> Unit) {
                         title = src.label,
                         subtitle = when (src) {
                             AudioSource.URDU -> "everyayah.com · প্রতিটি আয়াতের উর্দু অনুবাদ"
-                            else -> "অ্যাপের বাংলা ভাবার্থ, কয়েকটি আয়াতের অর্থ একসাথে থাকলে শেষ আয়াতের পর বাজে"
+                            else -> "প্রতিটি আয়াতের পূর্ণ বাংলা অনুবাদ (ড. আবু বকর মুহাম্মাদ যাকারিয়া)"
                         },
                         selected = vm.translationAudio == src,
                         onClick = { vm.updateTranslationAudio(src) },
