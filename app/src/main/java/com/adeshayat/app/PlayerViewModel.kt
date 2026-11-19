@@ -177,12 +177,14 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
     /** বর্তমান সেটিং অনুযায়ী এই আয়াতে কোন কোন ট্র্যাক বাজবে */
     fun tracksFor(verse: Verse): List<Track> {
-        val list = ArrayList<Track>(2)
+        val keys = verse.audioKeys
+        val list = ArrayList<Track>(keys.size * 2)
+        // ۙ চিহ্নের কারণে যুক্ত আয়াত থাকলে: আগে সবগুলোর আরবি তেলাওয়াত, তারপর সবগুলোর অনুবাদ
         if (playOrder != PlayOrder.TRANSLATION_ONLY) {
-            list.add(Track(reciter, verse.key))
+            keys.forEach { list.add(Track(reciter, it)) }
         }
         if (playOrder != PlayOrder.ARABIC_ONLY) {
-            translationAudio.fileKey(verse)?.let { list.add(Track(translationAudio, it)) }
+            keys.forEach { list.add(Track(translationAudio, it)) }
         }
         return list
     }

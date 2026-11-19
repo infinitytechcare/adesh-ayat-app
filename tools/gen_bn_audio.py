@@ -60,6 +60,10 @@ async def main(verses_path, out_root):
     for v in d['verses']:
         key = f"{v['s']:03d}{v['a']:03d}"
         jobs.append((key, speech_text(v['tr'])))
+        # না থামার চিহ্ন (ۙ)-এর কারণে সাথে যুক্ত পরের আয়াতগুলো
+        for n in v.get('nx', []):
+            jobs.append((f"{v['s']:03d}{n['a']:03d}", speech_text(n['tr'])))
+    jobs = list(dict(jobs).items())
     sem = asyncio.Semaphore(4)
     tasks = []
     for folder, voice in VOICES.items():

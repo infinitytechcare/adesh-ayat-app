@@ -681,7 +681,8 @@ private fun VerseCard(index: Int, verse: Verse, vm: PlayerViewModel) {
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = "আয়াত ${verse.surah.bn()}:${verse.ayah.bn()}",
+                    text = if (verse.continuation.isEmpty()) "আয়াত ${verse.surah.bn()}:${verse.ayah.bn()}"
+                    else "আয়াত ${verse.surah.bn()}:${verse.ayah.bn()}–${verse.lastAyah.bn()}",
                     fontFamily = HindSiliguri,
                     fontSize = 12.sp,
                     color = Muted,
@@ -709,7 +710,13 @@ private fun VerseCard(index: Int, verse: Verse, vm: PlayerViewModel) {
 
         Spacer(Modifier.height(14.dp))
         Text(
-            text = verse.arabic,
+            text = if (verse.continuation.isEmpty()) verse.arabic
+            else buildString {
+                append(verse.arabic).append(" \uFD3F").append(verse.ayah.arabicDigits()).append("\uFD3E")
+                for (c in verse.continuation) {
+                    append(' ').append(c.arabic).append(" \uFD3F").append(c.ayah.arabicDigits()).append("\uFD3E")
+                }
+            },
             fontFamily = Amiri,
             fontSize = 25.sp,
             lineHeight = 48.sp,
@@ -718,6 +725,21 @@ private fun VerseCard(index: Int, verse: Verse, vm: PlayerViewModel) {
             style = androidx.compose.ui.text.TextStyle(textDirection = TextDirection.Rtl),
             modifier = Modifier.fillMaxWidth(),
         )
+
+        if (verse.continuation.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "ۙ  আয়াতের শেষে না থামার চিহ্ন — তাই পরের আয়াতসহ দেখানো ও বাজানো হচ্ছে",
+                fontFamily = HindSiliguri,
+                fontSize = 12.sp,
+                color = GoldDark,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(GoldLight.copy(alpha = 0.2f))
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
+        }
 
         if (vm.showBangla && verse.translation.isNotEmpty()) {
             Spacer(Modifier.height(12.dp))
@@ -729,7 +751,11 @@ private fun VerseCard(index: Int, verse: Verse, vm: PlayerViewModel) {
             )
             Spacer(Modifier.height(10.dp))
             Text(
-                text = verse.translation,
+                text = if (verse.continuation.isEmpty()) verse.translation
+                else buildString {
+                    append("(${verse.ayah.bn()}) ").append(verse.translation)
+                    for (c in verse.continuation) append("\n(${c.ayah.bn()}) ").append(c.translation)
+                },
                 fontFamily = HindSiliguri,
                 fontSize = 15.5.sp,
                 lineHeight = 26.sp,
@@ -1105,3 +1131,6 @@ private fun formatTime(ms: Int): String {
     val ss = if (s < 10) "0$s" else "$s"
     return "${m.bn()}:${ss.toBengaliDigits()}"
 }
+
+/** আরবি-ভারতীয় অঙ্কে আয়াত নম্বর, যেমন ٢٢ */
+private fun Int.arabicDigits(): String = toString().map { '\u0660' + (it - '0') }.joinToString("")

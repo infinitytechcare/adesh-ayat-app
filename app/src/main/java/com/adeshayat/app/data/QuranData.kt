@@ -12,6 +12,16 @@ data class Hadith(
     val text: String,
 )
 
+/** না থামার চিহ্ন (ۙ)-এর কারণে মূল আয়াতের সাথে যুক্ত পরের আয়াত */
+data class Ayah(
+    val surah: Int,
+    val ayah: Int,
+    val arabic: String,
+    val translation: String,
+) {
+    val key: String = String.format(Locale.US, "%03d%03d", surah, ayah)
+}
+
 data class Category(
     val id: Int,
     val title: String,
@@ -40,7 +50,13 @@ data class Verse(
     val hadithIds: List<String> = emptyList(),
     /** কিওয়ার্ডভিত্তিক বিষয়ের id (যেমন সত্যবাদিতা, ধৈর্য) */
     val themeIds: List<Int> = emptyList(),
+    /** আয়াতের শেষে ۙ (না থামার চিহ্ন) থাকলে পরের আয়াতগুলো — একসাথে দেখানো ও বাজানো হয় */
+    val continuation: List<Ayah> = emptyList(),
 ) {
+    /** মূল আয়াত আর যুক্ত আয়াতগুলোর অডিও ফাইলের নাম, ক্রমানুসারে */
+    val audioKeys: List<String> get() = listOf(key) + continuation.map { it.key }
+    val lastAyah: Int get() = continuation.lastOrNull()?.ayah ?: ayah
+
     fun inCategory(id: Int): Boolean = categoryId == id || id in themeIds
 
     /** গ্রুপের প্রথম আয়াত কিনা (একসাথে লেখা অর্থ এই আয়াতের নিচেই দেখানো হয়) */
@@ -102,6 +118,12 @@ class QuranData(
                         translation = v.optString("tr", ""),
                         hadithIds = v.optJSONArray("hd")?.let { arr ->
                             List(arr.length()) { arr.getString(it) }
+                        } ?: emptyList(),
+                        continuation = v.optJSONArray("nx")?.let { arr ->
+                            List(arr.length()) {
+                                val n = arr.getJSONObject(it)
+                                Ayah(s, n.getInt("a"), n.getString("ar"), n.optString("tr", ""))
+                            }
                         } ?: emptyList(),
                         themeIds = v.optJSONArray("tp")?.let { arr ->
                             List(arr.length()) { arr.getInt(it) }
