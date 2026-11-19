@@ -75,7 +75,7 @@ class VerseSearch(data: QuranData) {
                 if (next == '়' && (c == 'য' || c == 'ড' || c == 'ঢ')) {
                     sb.append(
                         when (c) {
-                            'য' -> 'য়'; 'ড' -> 'ড়'; else -> 'ঢ়'
+                            'য' -> '\u09DF'; 'ড' -> '\u09DC'; else -> '\u09DD'
                         }
                     )
                     i += 2
