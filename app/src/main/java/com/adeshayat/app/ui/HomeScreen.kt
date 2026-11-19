@@ -81,7 +81,24 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.adeshayat.app.CategoryStyle
 import com.adeshayat.app.PlayerViewModel
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FilterAlt
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SearchOff
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import com.adeshayat.app.REPEAT_TIMES
 import com.adeshayat.app.RepeatSetting
 import com.adeshayat.app.data.Verse
@@ -91,7 +108,7 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-private const val HEADER_ITEMS = 2 // হেডার + বিষয়ের চিপস
+private const val HEADER_ITEMS = 2 // হেডার + সার্চ ও বিষয়ের অংশ
 
 @Composable
 fun HomeScreen(vm: PlayerViewModel) {
@@ -131,7 +148,10 @@ fun HomeScreen(vm: PlayerViewModel) {
             contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + 16.dp),
         ) {
             item(key = "header") { Header(vm, onSettings = { showSettings = true }) }
-            item(key = "chips") { CategoryRow(vm) }
+            item(key = "filters") { FilterBar(vm) }
+            if (vm.visible.isEmpty()) {
+                item(key = "empty") { EmptyState(vm) }
+            }
             itemsIndexed(vm.visible, key = { _, v -> v.key }) { index, verse ->
                 val prevCat = vm.visible.getOrNull(index - 1)?.categoryId
                 Column {
@@ -187,8 +207,12 @@ private fun Header(vm: PlayerViewModel, onSettings: () -> Unit) {
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatPill("${vm.data.verses.size.bn()} আয়াত")
-                StatPill("${vm.data.categories.size.bn()} বিষয়")
-                StatPill("${vm.offlineCount().bn()} অফলাইনে")
+                StatPill("${(vm.data.categories.size + vm.data.themes.size).bn()} বিষয়")
+                StatPill(
+                    text = "${vm.offlineCount().bn()} অফলাইনে",
+                    selected = vm.offlineOnly,
+                    onClick = { vm.toggleOfflineOnly() },
+                )
             }
             Spacer(Modifier.height(16.dp))
             Row(
@@ -236,18 +260,36 @@ private fun Header(vm: PlayerViewModel, onSettings: () -> Unit) {
 }
 
 @Composable
-private fun StatPill(text: String) {
-    Text(
-        text = text,
-        color = Color.White,
-        fontSize = 13.sp,
-        fontFamily = HindSiliguri,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(Color.White.copy(alpha = 0.12f))
-            .padding(horizontal = 12.dp, vertical = 4.dp),
-    )
+private fun StatPill(text: String, selected: Boolean = false, onClick: (() -> Unit)? = null) {
+    var mod = Modifier
+        .clip(RoundedCornerShape(50))
+        .background(if (selected) Gold else Color.White.copy(alpha = 0.12f))
+    if (onClick != null) {
+        mod = mod
+            .border(1.dp, GoldLight.copy(alpha = if (selected) 1f else 0.5f), RoundedCornerShape(50))
+            .clickable(onClick = onClick)
+    }
+    Row(
+        modifier = mod.padding(horizontal = 12.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (onClick != null) {
+            Icon(
+                if (selected) Icons.Rounded.FilterAlt else Icons.Rounded.DownloadDone,
+                contentDescription = null,
+                tint = if (selected) Emerald900 else GoldLight,
+                modifier = Modifier.size(14.dp),
+            )
+            Spacer(Modifier.width(4.dp))
+        }
+        Text(
+            text = text,
+            color = if (selected) Emerald900 else Color.White,
+            fontSize = 13.sp,
+            fontFamily = HindSiliguri,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
 }
 
 @Composable
@@ -317,9 +359,63 @@ private fun DrawScope.drawStar(center: Offset, outer: Float, inner: Float, color
 // ---------------------------------------------------------------- Categories
 
 @Composable
-private fun CategoryRow(vm: PlayerViewModel) {
+private fun FilterBar(vm: PlayerViewModel) {
+    Column(Modifier.padding(top = 14.dp)) {
+        SearchField(vm)
+        if (vm.categoryStyle == CategoryStyle.DROPDOWN) {
+            CategoryDropdown(vm)
+        } else {
+            CategoryChips(vm)
+        }
+        if (vm.isFiltered) FilterSummary(vm)
+    }
+}
+
+@Composable
+private fun SearchField(vm: PlayerViewModel) {
+    val focus = LocalFocusManager.current
+    OutlinedTextField(
+        value = vm.searchQuery,
+        onValueChange = { vm.updateSearch(it) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        singleLine = true,
+        shape = RoundedCornerShape(50),
+        textStyle = TextStyle(fontFamily = HindSiliguri, fontSize = 15.sp, color = Emerald900),
+        placeholder = {
+            Text(
+                "বাংলা বা আরবি শব্দ, যেমন: সত্য, ধৈর্য, ২:১৫৩",
+                fontFamily = HindSiliguri,
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Emerald700) },
+        trailingIcon = {
+            if (vm.searchQuery.isNotEmpty()) {
+                IconButton(onClick = { vm.updateSearch("") }) {
+                    Icon(Icons.Rounded.Close, contentDescription = "মুছুন", tint = Emerald700)
+                }
+            }
+        },
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            focusedBorderColor = Emerald700,
+            unfocusedBorderColor = Emerald700.copy(alpha = 0.2f),
+            cursorColor = Emerald700,
+        ),
+    )
+}
+
+@Composable
+private fun CategoryChips(vm: PlayerViewModel) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
@@ -331,12 +427,188 @@ private fun CategoryRow(vm: PlayerViewModel) {
             }
         }
     }
+    if (vm.data.themes.isNotEmpty()) {
+        LazyRow(
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            item {
+                Text(
+                    "বিষয়ভিত্তিক:",
+                    fontFamily = HindSiliguri,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = GoldDark,
+                )
+            }
+            items(vm.data.themes, key = { it.id }) { t ->
+                CategoryChip(t.title, selected = vm.selectedCategory == t.id, theme = true) {
+                    vm.selectCategory(if (vm.selectedCategory == t.id) null else t.id)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryDropdown(vm: PlayerViewModel) {
+    var expanded by remember { mutableStateOf(false) }
+    val sel = vm.selectedCategory
+    val label = when {
+        sel == null -> "সব আয়াত (${vm.data.verses.size.bn()})"
+        sel >= 100 -> "${vm.data.categoryTitle(sel)} (${vm.data.countIn(sel).bn()})"
+        else -> "${sel.bn()}. ${vm.data.categoryTitle(sel)} (${vm.data.countIn(sel).bn()})"
+    }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 10.dp),
+    ) {
+        OutlinedTextField(
+            value = label,
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            label = { Text("বিষয় বেছে নিন", fontFamily = HindSiliguri) },
+            textStyle = TextStyle(fontFamily = HindSiliguri, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Emerald900),
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedBorderColor = Emerald700,
+                unfocusedBorderColor = Emerald700.copy(alpha = 0.2f),
+                focusedLabelColor = Emerald700,
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = Color.White,
+        ) {
+            DropdownItem("সব আয়াত", vm.data.verses.size, sel == null) {
+                vm.selectCategory(null); expanded = false
+            }
+            DropdownHeader("মূল বিষয়")
+            vm.data.categories.forEach { c ->
+                DropdownItem("${c.id.bn()}. ${c.title}", vm.data.countIn(c.id), sel == c.id) {
+                    vm.selectCategory(c.id); expanded = false
+                }
+            }
+            if (vm.data.themes.isNotEmpty()) {
+                DropdownHeader("বিষয়ভিত্তিক (কিওয়ার্ড)")
+                vm.data.themes.forEach { t ->
+                    DropdownItem(t.title, vm.data.countIn(t.id), sel == t.id) {
+                        vm.selectCategory(t.id); expanded = false
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
-private fun CategoryChip(text: String, selected: Boolean, onClick: () -> Unit) {
-    val bg by animateColorAsState(if (selected) Emerald700 else Color.White, label = "chipBg")
-    val fg by animateColorAsState(if (selected) Color.White else Emerald800, label = "chipFg")
+private fun DropdownHeader(text: String) {
+    Text(
+        text,
+        fontFamily = HindSiliguri,
+        fontWeight = FontWeight.Bold,
+        fontSize = 13.sp,
+        color = GoldDark,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+    )
+}
+
+@Composable
+private fun DropdownItem(text: String, count: Int, selected: Boolean, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text,
+                    fontFamily = HindSiliguri,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    color = if (selected) Emerald700 else Emerald900,
+                    fontSize = 15.sp,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(count.bn(), fontFamily = HindSiliguri, fontSize = 13.sp, color = Emerald700.copy(alpha = 0.6f))
+            }
+        },
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun FilterSummary(vm: PlayerViewModel) {
+    val parts = buildList {
+        vm.selectedCategory?.let { add(vm.data.categoryTitle(it)) }
+        if (vm.searchQuery.isNotBlank()) add("“${vm.searchQuery.trim()}”")
+        if (vm.offlineOnly) add("অফলাইনে")
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "${vm.visible.size.bn()}টি আয়াত · ${parts.joinToString(" · ")}",
+            fontFamily = HindSiliguri,
+            fontSize = 13.sp,
+            color = Emerald800,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            "ফিল্টার মুছুন",
+            fontFamily = HindSiliguri,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp,
+            color = GoldDark,
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .clickable { vm.clearFilters() }
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+    }
+}
+
+@Composable
+private fun EmptyState(vm: PlayerViewModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(Icons.Rounded.SearchOff, contentDescription = null, tint = Emerald700.copy(alpha = 0.5f), modifier = Modifier.size(48.dp))
+        Spacer(Modifier.height(10.dp))
+        Text(
+            text = if (vm.offlineOnly && vm.searchQuery.isBlank() && vm.selectedCategory == null)
+                "এখনো কোনো আয়াত অফলাইনে সেভ হয়নি। একবার প্লে করলে বা \"সব অফলাইনে সেভ\" চাপলে এখানে দেখাবে।"
+            else "এই ফিল্টারে কোনো আয়াত পাওয়া যায়নি।",
+            fontFamily = HindSiliguri,
+            fontSize = 15.sp,
+            color = Emerald800,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun CategoryChip(text: String, selected: Boolean, theme: Boolean = false, onClick: () -> Unit) {
+    val accent = if (theme) GoldDark else Emerald700
+    val bg by animateColorAsState(if (selected) accent else if (theme) GoldLight.copy(alpha = 0.25f) else Color.White, label = "chipBg")
+    val fg by animateColorAsState(if (selected) Color.White else if (theme) Emerald900 else Emerald800, label = "chipFg")
     Text(
         text = text,
         color = fg,
@@ -347,7 +619,7 @@ private fun CategoryChip(text: String, selected: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(bg)
-            .border(1.dp, if (selected) Emerald700 else Emerald700.copy(alpha = 0.2f), RoundedCornerShape(50))
+            .border(1.dp, if (selected) accent else accent.copy(alpha = 0.25f), RoundedCornerShape(50))
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
     )

@@ -15,6 +15,8 @@ data class Hadith(
 data class Category(
     val id: Int,
     val title: String,
+    /** কিওয়ার্ডভিত্তিক বিষয় (একটি আয়াত একাধিক বিষয়ে থাকতে পারে) */
+    val isTheme: Boolean = false,
 )
 
 data class Verse(
@@ -36,7 +38,11 @@ data class Verse(
     val translation: String = "",
     /** সম্পর্কিত হাদিসের id (QuranData.hadiths-এ খুঁজুন) */
     val hadithIds: List<String> = emptyList(),
+    /** কিওয়ার্ডভিত্তিক বিষয়ের id (যেমন সত্যবাদিতা, ধৈর্য) */
+    val themeIds: List<Int> = emptyList(),
 ) {
+    fun inCategory(id: Int): Boolean = categoryId == id || id in themeIds
+
     /** গ্রুপের প্রথম আয়াত কিনা (একসাথে লেখা অর্থ এই আয়াতের নিচেই দেখানো হয়) */
     val isGroupStart: Boolean get() = group.isEmpty() || meaningBn.isNotEmpty()
     /** everyayah.com-এর ফাইল নাম: সূরা ৩ ঘর + আয়াত ৩ ঘর, যেমন 001007 */
@@ -48,10 +54,14 @@ class QuranData(
     val categories: List<Category>,
     val verses: List<Verse>,
     val hadiths: Map<String, Hadith> = emptyMap(),
+    val themes: List<Category> = emptyList(),
 ) {
+    fun countIn(id: Int): Int = verses.count { it.inCategory(id) }
+
     fun hadithsFor(verse: Verse): List<Hadith> = verse.hadithIds.mapNotNull { hadiths[it] }
 
-    fun categoryTitle(id: Int): String = categories.firstOrNull { it.id == id }?.title ?: ""
+    fun categoryTitle(id: Int): String =
+        (categories.firstOrNull { it.id == id } ?: themes.firstOrNull { it.id == id })?.title ?: ""
 
     companion object {
         fun load(context: Context): QuranData {
@@ -63,6 +73,14 @@ class QuranData(
             for (i in 0 until catArray.length()) {
                 val c = catArray.getJSONObject(i)
                 categories.add(Category(c.getInt("id"), c.getString("title")))
+            }
+
+            val themes = ArrayList<Category>()
+            root.optJSONArray("themes")?.let { arr ->
+                for (i in 0 until arr.length()) {
+                    val c = arr.getJSONObject(i)
+                    themes.add(Category(c.getInt("id"), c.getString("title"), isTheme = true))
+                }
             }
 
             val surahNames = root.getJSONObject("surahs")
@@ -85,6 +103,9 @@ class QuranData(
                         hadithIds = v.optJSONArray("hd")?.let { arr ->
                             List(arr.length()) { arr.getString(it) }
                         } ?: emptyList(),
+                        themeIds = v.optJSONArray("tp")?.let { arr ->
+                            List(arr.length()) { arr.getInt(it) }
+                        } ?: emptyList(),
                     )
                 )
             }
@@ -105,6 +126,7 @@ class QuranData(
                 categories,
                 verses.map { it.copy(bnAudioKey = bnAudioKeyFor(it, groupLastAyah)) },
                 hadiths,
+                themes,
             )
         }
 

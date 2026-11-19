@@ -5,6 +5,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.PowerManager
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +18,7 @@ import com.adeshayat.app.audio.AudioSource
 import com.adeshayat.app.data.QuranData
 import com.adeshayat.app.data.Verse
 import com.adeshayat.app.data.bn
+import com.adeshayat.app.search.VerseSearch
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -41,6 +43,12 @@ enum class RepeatSetting(val label: String, val short: String) {
 val ARABIC_RECITERS = listOf(AudioSource.ALAFASY, AudioSource.ABDUL_SAMAD)
 val TRANSLATION_AUDIOS = listOf(AudioSource.BN_PRADEEP, AudioSource.BN_NABANITA, AudioSource.URDU)
 
+/** বিষয়গুলো কীভাবে দেখাবে */
+enum class CategoryStyle(val label: String) {
+    CHIPS("বাটন (পাশাপাশি সরানো যায়)"),
+    DROPDOWN("ড্রপডাউন তালিকা"),
+}
+
 /** একটি আয়াতের একটি অডিও ট্র্যাক */
 data class Track(val source: AudioSource, val key: String)
 
@@ -61,12 +69,31 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var repeatMode by mutableStateOf(loadRepeatMode())
         private set
+    var categoryStyle by mutableStateOf(enumPref(KEY_CATEGORY_STYLE, CategoryStyle.CHIPS))
+        private set
 
     // ---------- UI state ----------
     var selectedCategory by mutableStateOf<Int?>(null)
         private set
-    var visible by mutableStateOf(data.verses)
+    var searchQuery by mutableStateOf("")
         private set
+    /** "অফলাইনে" চাপলে শুধু ফোনে সেভ করা আয়াত দেখায় */
+    var offlineOnly by mutableStateOf(false)
+        private set
+    private val search = VerseSearch(data)
+
+    /** বিষয়, সার্চ আর অফলাইন ফিল্টার মিলিয়ে তালিকায় যেসব আয়াত দেখাবে */
+    val visible: List<Verse> by derivedStateOf {
+        val cat = selectedCategory
+        val q = searchQuery
+        val offline = offlineOnly
+        data.verses.filter { v ->
+            (cat == null || v.inCategory(cat)) &&
+                search.matches(v, q) &&
+                (!offline || isOffline(v))
+        }
+    }
+    val isFiltered: Boolean get() = selectedCategory != null || searchQuery.isNotBlank() || offlineOnly
 
     var currentVerse by mutableStateOf<Verse?>(null)
         private set
@@ -132,6 +159,11 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         prefs.edit().putString(KEY_PLAY_ORDER, order.name).apply()
     }
 
+    fun updateCategoryStyle(style: CategoryStyle) {
+        categoryStyle = style
+        prefs.edit().putString(KEY_CATEGORY_STYLE, style.name).apply()
+    }
+
     fun updateRepeatMode(mode: RepeatSetting) {
         repeatMode = mode
         prefs.edit().putString(KEY_REPEAT_MODE, mode.name).apply()
@@ -166,7 +198,20 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
     fun selectCategory(id: Int?) {
         selectedCategory = id
-        visible = if (id == null) data.verses else data.verses.filter { it.categoryId == id }
+    }
+
+    fun updateSearch(query: String) {
+        searchQuery = query
+    }
+
+    fun toggleOfflineOnly() {
+        offlineOnly = !offlineOnly
+    }
+
+    fun clearFilters() {
+        selectedCategory = null
+        searchQuery = ""
+        offlineOnly = false
     }
 
     fun clearMessage() {
@@ -177,7 +222,12 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
     /** তালিকার প্রথম আয়াত থেকে একের পর এক বাজানো শুরু করে। */
     fun playAll() {
-        visible.firstOrNull()?.let { playVerse(it) }
+        val first = visible.firstOrNull()
+        if (first == null) {
+            message = "তালিকায় কোনো আয়াত নেই"
+            return
+        }
+        playVerse(first)
     }
 
     fun playVerse(verse: Verse) {
@@ -523,6 +573,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         private const val KEY_TRANSLATION = "translation_audio"
         private const val KEY_PLAY_ORDER = "play_order"
         private const val KEY_REPEAT_MODE = "repeat_mode"
+        private const val KEY_CATEGORY_STYLE = "category_style"
         private const val KEY_OLD_AUDIO_MODE = "audio_mode"
         private const val KEY_OLD_REPEAT = "repeat_five"
     }

@@ -34,6 +34,7 @@ import com.adeshayat.app.PlayOrder
 import com.adeshayat.app.TRANSLATION_AUDIOS
 import com.adeshayat.app.audio.AudioSource
 import com.adeshayat.app.PlayerViewModel
+import com.adeshayat.app.CategoryStyle
 import com.adeshayat.app.RepeatSetting
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,6 +156,19 @@ fun SettingsSheet(vm: PlayerViewModel, onDismiss: () -> Unit) {
                         subtitle = mode.label,
                         selected = vm.repeatMode == mode,
                         onClick = { vm.updateRepeatMode(mode) },
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+            SectionLabel("বিষয় দেখানোর ধরন")
+            SettingsCard {
+                for (style in CategoryStyle.values()) {
+                    OptionRow(
+                        title = if (style == CategoryStyle.CHIPS) "বাটন" else "ড্রপডাউন",
+                        subtitle = style.label,
+                        selected = vm.categoryStyle == style,
+                        onClick = { vm.updateCategoryStyle(style) },
                     )
                 }
             }
