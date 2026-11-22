@@ -40,7 +40,8 @@ enum class RepeatSetting(val label: String, val short: String) {
     ONE("একটি আয়াতই বারবার (Repeat One)", "বারবার"),
 }
 
-val ARABIC_RECITERS = listOf(AudioSource.ALAFASY, AudioSource.ABDUL_SAMAD)
+/** everyayah.com-এর সব আরবি ক্বারী (অনুবাদ বাদে) */
+val ARABIC_RECITERS = AudioSource.values().filter { it.isArabic }
 val TRANSLATION_AUDIOS = listOf(AudioSource.BN_PRADEEP, AudioSource.BN_NABANITA, AudioSource.URDU)
 
 /** বিষয়গুলো কীভাবে দেখাবে */

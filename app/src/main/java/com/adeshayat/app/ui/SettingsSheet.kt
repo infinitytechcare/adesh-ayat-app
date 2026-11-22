@@ -22,6 +22,24 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.RecordVoiceOver
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.TextStyle
+import com.adeshayat.app.data.bn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +59,10 @@ import com.adeshayat.app.RepeatSetting
 @Composable
 fun SettingsSheet(vm: PlayerViewModel, onDismiss: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showReciters by remember { mutableStateOf(false) }
+    if (showReciters) {
+        ReciterDialog(vm) { showReciters = false }
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -116,18 +138,23 @@ fun SettingsSheet(vm: PlayerViewModel, onDismiss: () -> Unit) {
             }
 
             Spacer(Modifier.height(14.dp))
-            SectionLabel("আরবি ক্বারী")
+            SectionLabel("আরবি ক্বারী (${ARABIC_RECITERS.size.bn()} জন)")
             SettingsCard {
-                for (src in ARABIC_RECITERS) {
-                    OptionRow(
-                        title = src.label,
-                        subtitle = when (src) {
-                            AudioSource.ABDUL_SAMAD -> "everyayah.com · QuranExplorer.com"
-                            else -> "everyayah.com · ৬৪ kbps"
-                        },
-                        selected = vm.reciter == src,
-                        onClick = { vm.updateReciter(src) },
-                    )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { showReciters = true }
+                        .padding(vertical = 10.dp, horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Rounded.RecordVoiceOver, contentDescription = null, tint = Emerald700)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(vm.reciter.label, fontFamily = HindSiliguri, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Emerald800)
+                        Text("চাপ দিয়ে অন্য ক্বারী বেছে নিন · ${vm.reciter.info}", fontFamily = HindSiliguri, fontSize = 12.sp, color = Muted)
+                    }
+                    Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = Emerald700)
                 }
             }
 
@@ -236,4 +263,56 @@ private fun OptionRow(title: String, subtitle: String, selected: Boolean, onClic
             Text(subtitle, fontFamily = HindSiliguri, fontSize = 12.sp, color = Muted)
         }
     }
+}
+
+/** সব ক্বারীর তালিকা — নাম লিখে খোঁজা যায় */
+@Composable
+private fun ReciterDialog(vm: PlayerViewModel, onDismiss: () -> Unit) {
+    var query by remember { mutableStateOf("") }
+    val list = ARABIC_RECITERS.filter { query.isBlank() || it.label.contains(query.trim()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Cream,
+        title = {
+            Text("আরবি ক্বারী বেছে নিন", fontFamily = HindSiliguri, fontWeight = FontWeight.Bold, color = Emerald800)
+        },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    singleLine = true,
+                    placeholder = { Text("নাম লিখে খুঁজুন", fontFamily = HindSiliguri) },
+                    leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null, tint = Emerald700) },
+                    shape = RoundedCornerShape(50),
+                    textStyle = TextStyle(fontFamily = HindSiliguri, fontSize = 15.sp, color = Ink),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedBorderColor = Emerald700,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                    items(list, key = { it.name }) { src ->
+                        OptionRow(
+                            title = src.label,
+                            subtitle = src.info,
+                            selected = vm.reciter == src,
+                            onClick = { vm.updateReciter(src); onDismiss() },
+                        )
+                    }
+                }
+                Text(
+                    "কিছু ক্বারীর সব আয়াতের অডিও সাইটে নেই — না পেলে সেই আয়াত বাদ দিয়ে পরেরটা বাজবে।",
+                    fontFamily = HindSiliguri, fontSize = 11.sp, color = Muted,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("বন্ধ", fontFamily = HindSiliguri, color = Emerald700) }
+        },
+    )
 }

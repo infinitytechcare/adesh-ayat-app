@@ -82,6 +82,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.adeshayat.app.CategoryStyle
+import android.os.Build
+import android.widget.Toast
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import com.adeshayat.app.PlayerViewModel
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -688,6 +695,7 @@ private fun VerseCard(index: Int, verse: Verse, vm: PlayerViewModel) {
                     color = Muted,
                 )
             }
+            CopyMenu(verse)
             StatusIndicator(isCurrent, verse, vm)
             Spacer(Modifier.width(10.dp))
             val playingThis = isCurrent && vm.isPlaying
@@ -917,6 +925,16 @@ private fun HadithItem(h: Hadith) {
                         .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
+            val copy = rememberCopier()
+            IconButton(onClick = {
+                copy(buildString {
+                    append(h.text)
+                    append("\n— ").append(h.ref)
+                    if (h.grade.isNotEmpty()) append(" (").append(h.grade).append(")")
+                }, "হাদিস কপি হয়েছে")
+            }, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Rounded.ContentCopy, contentDescription = "হাদিস কপি", tint = Emerald700, modifier = Modifier.size(18.dp))
+            }
         }
         Spacer(Modifier.height(6.dp))
         Text(
@@ -1134,3 +1152,59 @@ private fun formatTime(ms: Int): String {
 
 /** আরবি-ভারতীয় অঙ্কে আয়াত নম্বর, যেমন ٢٢ */
 private fun Int.arabicDigits(): String = toString().map { '\u0660' + (it - '0') }.joinToString("")
+
+/** কপি করে ছোট বার্তা দেখায় (Android 13+ এ সিস্টেম নিজেই দেখায়) */
+@Composable
+private fun rememberCopier(): (String, String) -> Unit {
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
+    return remember(clipboard, context) {
+        { text: String, toast: String ->
+            clipboard.setText(AnnotatedString(text))
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                Toast.makeText(context, toast, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}
+
+private fun Verse.refText(): String =
+    "সূরা $surahName, আয়াত ${surah.bn()}:${ayah.bn()}" + (if (continuation.isEmpty()) "" else "–${lastAyah.bn()}")
+
+private fun Verse.fullArabic(): String = (listOf(arabic) + continuation.map { it.arabic }).joinToString(" ")
+
+private fun Verse.fullTranslation(): String =
+    if (continuation.isEmpty()) translation
+    else (listOf("(${ayah.bn()}) $translation") + continuation.map { "(${it.ayah.bn()}) ${it.translation}" }).joinToString("\n")
+
+/** কার্ডের কপি আইকন: আরবি, বাংলা অনুবাদ বা দুটোই */
+@Composable
+private fun CopyMenu(verse: Verse) {
+    var open by remember { mutableStateOf(false) }
+    val copy = rememberCopier()
+    Box {
+        IconButton(onClick = { open = true }, modifier = Modifier.size(36.dp)) {
+            Icon(Icons.Rounded.ContentCopy, contentDescription = "কপি", tint = Emerald700, modifier = Modifier.size(20.dp))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }, containerColor = Color.White) {
+            CopyItem("আরবি আয়াত কপি") {
+                copy("${verse.fullArabic()}\n— ${verse.refText()}", "আরবি আয়াত কপি হয়েছে"); open = false
+            }
+            CopyItem("বাংলা অনুবাদ কপি") {
+                copy("${verse.fullTranslation()}\n— ${verse.refText()}", "বাংলা অনুবাদ কপি হয়েছে"); open = false
+            }
+            CopyItem("আরবি + বাংলা একসাথে কপি") {
+                copy("${verse.fullArabic()}\n\n${verse.fullTranslation()}\n— ${verse.refText()}", "আয়াত ও অনুবাদ কপি হয়েছে"); open = false
+            }
+        }
+    }
+}
+
+@Composable
+private fun CopyItem(text: String, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(text, fontFamily = HindSiliguri, fontSize = 15.sp, color = Emerald900) },
+        leadingIcon = { Icon(Icons.Rounded.ContentCopy, contentDescription = null, tint = Emerald700, modifier = Modifier.size(18.dp)) },
+        onClick = onClick,
+    )
+}
